@@ -5,6 +5,7 @@ import pytest
 from plenum.common.constants import DOMAIN_LEDGER_ID, LedgerState
 from plenum.common.util import updateNamedTuple
 from plenum.test.delayers import cqDelay, cr_delay
+from plenum.test.test_client import TestClient
 from stp_zmq.zstack import KITZStack
 
 from stp_core.loop.eventually import eventually
@@ -13,7 +14,8 @@ from stp_core.common.log import getlogger
 from plenum.test.helper import sendReqsToNodesAndVerifySuffReplies
 from plenum.test.node_catchup.helper import waitNodeDataEquality, \
     check_ledger_state
-from plenum.test.pool_transactions.helper import disconnect_node_and_ensure_disconnected
+from plenum.test.pool_transactions.helper import disconnect_node_and_ensure_disconnected, \
+    buildPoolClientAndWallet
 from plenum.test.test_ledger_manager import TestLedgerManager
 from plenum.test.test_node import checkNodesConnected, TestNode
 from plenum.test import waits
@@ -33,7 +35,8 @@ def limitTestRunningTime():
 
 def testNodeCatchupAfterRestart(newNodeCaughtUp, txnPoolNodeSet, tconf,
                                 nodeSetWithNodeAddedAfterSomeTxns,
-                                tdirWithPoolTxns, allPluginsPath):
+                                tdirWithPoolTxns, allPluginsPath,
+                                poolTxnStewardData):
     """
     A node that restarts after some transactions should eventually get the
     transactions which happened while it was down
@@ -48,8 +51,14 @@ def testNodeCatchupAfterRestart(newNodeCaughtUp, txnPoolNodeSet, tconf,
     logger.debug("Sending requests")
 
     # Here's where we apply some load
-    for i in range(50):
+    for i in range(100):
+        # c, w = buildPoolClientAndWallet(poolTxnStewardData,
+        #                                           tdirWithPoolTxns,
+        #                                           clientClass=TestClient)
+        # looper.add(c)
+        # sendReqsToNodesAndVerifySuffReplies(looper, w, c, 5)
         sendReqsToNodesAndVerifySuffReplies(looper, wallet, client, 5)
+        # looper.removeProdable(c)
 
     logger.debug("Starting the stopped node, {}".format(newNode))
     nodeHa, nodeCHa = HA(*newNode.nodestack.ha), HA(*newNode.clientstack.ha)

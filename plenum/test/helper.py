@@ -707,7 +707,7 @@ def chk_all_funcs(looper, funcs, acceptable_fails=0, retry_wait=None,
                 func()
             except Exception:
                 fails += 1
-        assert fails <= acceptable_fails
+        assert fails <= acceptable_fails, '{} failed'.format(func)
 
     kwargs = {}
     if retry_wait:
