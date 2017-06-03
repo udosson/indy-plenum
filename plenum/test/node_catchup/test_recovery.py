@@ -33,6 +33,25 @@ def limitTestRunningTime():
     return None
 
 
+def testNodeLoad(looper, txnPoolNodeSet, tconf,
+                 tdirWithPoolTxns, allPluginsPath,
+                 poolTxnStewardData):
+    client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
+                                              tdirWithPoolTxns,
+                                              clientClass=TestClient)
+    looper.add(client)
+    looper.run(client.ensureConnectedToNodes())
+    # Here's where we apply some load
+    for i in range(100):
+        # c, w = buildPoolClientAndWallet(poolTxnStewardData,
+        #                                           tdirWithPoolTxns,
+        #                                           clientClass=TestClient)
+        # looper.add(c)
+        # sendReqsToNodesAndVerifySuffReplies(looper, w, c, 5)
+        sendReqsToNodesAndVerifySuffReplies(looper, wallet, client, 5)
+        # looper.removeProdable(c)
+
+
 def testNodeCatchupAfterRestart(newNodeCaughtUp, txnPoolNodeSet, tconf,
                                 nodeSetWithNodeAddedAfterSomeTxns,
                                 tdirWithPoolTxns, allPluginsPath,
