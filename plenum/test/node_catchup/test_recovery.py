@@ -105,6 +105,6 @@ def testNodeCatchupAfterRestart(newNodeCaughtUp, txnPoolNodeSet, tconf,
     #                      customTimeout=timeout)
     #
     sendReqsToNodesAndVerifySuffReplies(looper, wallet, client, 5)
-    waitNodeDataEquality(looper, newNode, *txnPoolNodeSet[:4], customTimeout=timeout)
+    waitNodeDataEquality(looper, newNode, *txnPoolNodeSet[:4])
 
 
