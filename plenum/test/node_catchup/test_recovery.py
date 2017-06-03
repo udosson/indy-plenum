@@ -76,44 +76,11 @@ def testNodeCatchupAfterRestart(newNodeCaughtUp, txnPoolNodeSet, tconf,
     looper.run(eventually(check_ledger_state, newNode, DOMAIN_LEDGER_ID,
                           LedgerState.syncing, retryWait=.5, timeout=5))
 
-    confused_node = txnPoolNodeSet[0]
-    cp = newNode.ledgerManager.ledgerRegistry[DOMAIN_LEDGER_ID].catchUpTill
-    start, end = cp.seqNoStart, cp.seqNoEnd
-    cons_proof = confused_node.ledgerManager._buildConsistencyProof(
-        DOMAIN_LEDGER_ID, start, end)
-
-    bad_send_time = None
-
-    def chk():
-        nonlocal bad_send_time
-        entries = newNode.ledgerManager.spylog.getAll(
-            newNode.ledgerManager.canProcessConsistencyProof.__name__)
-        for entry in entries:
-            # `canProcessConsistencyProof` should return False after `syncing_time`
-            if entry.result == False and entry.starttime > bad_send_time:
-                return
-        assert False
-
-    def send_and_chk(ledger_state):
-        nonlocal bad_send_time, cons_proof
-        bad_send_time = perf_counter()
-        confused_node.ledgerManager.sendTo(cons_proof, newNode.name)
-        # Check that the ConsistencyProof messages rejected
-        looper.run(eventually(chk, retryWait=.5, timeout=5))
-        check_ledger_state(newNode, DOMAIN_LEDGER_ID, ledger_state)
-
-    send_and_chk(LedgerState.syncing)
-
     # Not accurate timeout but a conservative one
     timeout = waits.expectedPoolGetReadyTimeout(len(txnPoolNodeSet)) + \
               2*delay_catchup_reply
     waitNodeDataEquality(looper, newNode, *txnPoolNodeSet[:4],
                          customTimeout=timeout)
-
-    send_and_chk(LedgerState.synced)
-    # cons_proof = updateNamedTuple(cons_proof, seqNoEnd=cons_proof.seqNoStart,
-    #                               seqNoStart=cons_proof.seqNoEnd)
-    # send_and_chk(LedgerState.synced)
 
     sendReqsToNodesAndVerifySuffReplies(looper, wallet, client, 5)
     waitNodeDataEquality(looper, newNode, *txnPoolNodeSet[:4], customTimeout=timeout)
