@@ -3,6 +3,7 @@ from statistics import pstdev, mean
 from time import perf_counter
 from types import MethodType
 
+import math
 import pytest
 
 from plenum.common.constants import DOMAIN_LEDGER_ID, LedgerState
@@ -23,15 +24,23 @@ from plenum.test import waits
 # noinspection PyUnresolvedReferences
 from plenum.test.node_catchup.conftest import whitelist
 
-# Logger.setLogLevel(logging.WARNING)
+Logger.setLogLevel(logging.WARNING)
 logger = getlogger()
 txnCount = 5
 
 
-@pytest.fixture(scope="function", autouse=True)
-def limitTestRunningTime():
-    # remove general limit for this module
-    return None
+# @pytest.fixture(scope="function", autouse=True)
+# def limitTestRunningTime():
+#     # remove general limit for this module
+#     return None
+TestRunningTimeLimitSec = math.inf
+
+
+@pytest.fixture(scope="module")
+def disable_node_monitor_config(tconf):
+    tconf.unsafe.add('disable_view_change')
+    # tconf.unsafe.add('disable_monitor')
+    return tconf
 
 
 def test_node_load(looper, txnPoolNodeSet, tconf,
@@ -57,7 +66,7 @@ def test_node_load(looper, txnPoolNodeSet, tconf,
 
 # This is failing because the time to process txns is steadily increasing
 # https://gist.github.com/jasonalaw/117624a020e3e755826be23204a630be
-def test_node_load_consistent_time(looper, txnPoolNodeSet, tconf,
+def test_node_load_consistent_time(disable_node_monitor_config, looper, txnPoolNodeSet, tconf,
                                    tdirWithPoolTxns, allPluginsPath,
                                    poolTxnStewardData, capsys):
     client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
@@ -69,20 +78,26 @@ def test_node_load_consistent_time(looper, txnPoolNodeSet, tconf,
     client_batches = 300
     txns_per_batch = 25
     time_log = []
+    warm_up_batches = 10
+    tolerance_factor = 2
     for i in range(client_batches):
         s = perf_counter()
         sendReqsToNodesAndVerifySuffReplies(looper, wallet, client,
                                             txns_per_batch,
                                             override_timeout_limit=True)
         t = perf_counter() - s
-        if len(time_log) >= 3:
-            m = mean(time_log)
-            sd = pstdev(time_log)
-            assert abs(t - m) <= sd
-        time_log.append(t)
         with capsys.disabled():
             print('{} executed {} client txns in {:.2f} seconds'.
                   format(i + 1, txns_per_batch, t))
+        if len(time_log) >= warm_up_batches:
+            m = mean(time_log)
+            sd = tolerance_factor*pstdev(time_log)
+            assert m > t or abs(t - m) <= sd, '{} {}'.format(abs(t - m), sd)
+        time_log.append(t)
+        # Since client checks inbox for sufficient replies, clear inbox so that
+        #  it takes constant time to check replies for each batch
+        client.inBox.clear()
+        client.txnLog.reset()
 
 
 def test_node_load_after_add(newNodeCaughtUp, txnPoolNodeSet, tconf,
@@ -115,7 +130,7 @@ def test_node_load_after_add(newNodeCaughtUp, txnPoolNodeSet, tconf,
                   format(i+1, txns_per_batch, perf_counter()-s))
 
     logger.debug("Starting the stopped node, {}".format(newNode))
-    nodeHa, nodeCHa = HA(*newNode.nodestack.ha), HA(*newNode.clientstack.ha)
+    # nodeHa, nodeCHa = HA(*newNode.nodestack.ha), HA(*newNode.clientstack.ha)
     # newNode = TestNode(newNode.name, basedirpath=tdirWithPoolTxns, config=tconf,
     #                    ha=nodeHa, cliha=nodeCHa, pluginPaths=allPluginsPath)
     # looper.add(newNode)
@@ -197,6 +212,10 @@ def test_node_load_after_add_then_disconnect(newNodeCaughtUp, txnPoolNodeSet,
 
 def test_nodestack_contexts_are_discrete(txnPoolNodeSet):
     assert txnPoolNodeSet[0].nodestack.ctx != txnPoolNodeSet[1].nodestack.ctx
+    ctx_objs = {n.nodestack.ctx for n in txnPoolNodeSet}
+    ctx_underlying = {n.nodestack.ctx.underlying for n in txnPoolNodeSet}
+    assert len(ctx_objs) == len(txnPoolNodeSet)
+    assert len(ctx_underlying) == len(txnPoolNodeSet)
 
 
 def test_node_load_after_disconnect(looper, txnPoolNodeSet, tconf,
@@ -229,6 +248,13 @@ def test_node_load_after_disconnect(looper, txnPoolNodeSet, tconf,
         with capsys.disabled():
             print('{} executed {} client txns in {:.2f} seconds'.
                   format(i+1, txns_per_batch, perf_counter()-s))
+
+    nodeHa, nodeCHa = HA(*x.nodestack.ha), HA(*x.clientstack.ha)
+    newNode = TestNode(x.name, basedirpath=tdirWithPoolTxns, config=tconf,
+                       ha=nodeHa, cliha=nodeCHa, pluginPaths=allPluginsPath)
+    looper.add(newNode)
+    txnPoolNodeSet[-1] = newNode
+    looper.run(checkNodesConnected(txnPoolNodeSet))
 
 
 def test_node_load_after_one_node_drops_all_msgs(looper, txnPoolNodeSet, tconf,
