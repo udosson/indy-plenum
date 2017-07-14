@@ -41,6 +41,10 @@ class FileStore:
         self.ensureDurability = ensureDurability
         self._defaultFile = defaultFile
 
+    @property
+    def is_binary_store(self):
+        return self.BINARY_STORE
+
     def _prepareFiles(self, dbDir, dbName, defaultFile):
         if not defaultFile:
             return
@@ -81,8 +85,12 @@ class FileStore:
             self.dbFile.write(self.delimiter)
             if isinstance(value, str):
                 value = value.encode()
-            hexedHash = sha256(value).hexdigest()
-            self.dbFile.write(hexedHash)
+            hash = sha256(value)
+            if isinstance(self.lineSep, bytes):
+                hash = hash.digest()
+            else:
+                hash = hash.hexdigest()
+            self.dbFile.write(hash)
         self.dbFile.write(self.lineSep)
 
         # A little bit smart strategy like flush every 2 seconds
@@ -137,6 +145,8 @@ class FileStore:
         i = 1
         for line in lines:
             k = str(i)
+            if self.is_binary_store:
+                k = k.encode()
             yield self._parse_line(line, prefix, returnKey, returnValue, k)
             if self.isLineNoKey:
                 i += 1

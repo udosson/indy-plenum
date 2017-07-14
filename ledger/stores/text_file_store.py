@@ -5,6 +5,7 @@ from ledger.stores.file_store import FileStore
 
 
 class TextFileStore(FileStore):
+    BINARY_STORE = False
 
     def __init__(self,
                  dbDir,

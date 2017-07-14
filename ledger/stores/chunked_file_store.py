@@ -1,7 +1,8 @@
 import os
 import shutil
-from itertools import chain
-from typing import List, Generator
+
+from ledger.stores.binary_file_store import BinaryFileStore
+
 from ledger.stores.file_store import FileStore
 from ledger.stores.text_file_store import TextFileStore
 
@@ -21,12 +22,16 @@ class ChunkedFileStore(FileStore):
     storing the chunked data files.
     """
 
+    BINARY_STORE = None
+
     firstChunkIndex = 1
 
     @staticmethod
-    def _fileNameToChunkIndex(fileName):
+    def _fileNameToChunkIndex(file_name):
+        if file_name.endswith(BinaryFileStore.BINARY_FILE_EXT):
+            file_name = file_name[:-len(BinaryFileStore.BINARY_FILE_EXT)]
         try:
-            return int(fileName)
+            return int(file_name)
         except:
             return None
 
@@ -50,13 +55,20 @@ class ChunkedFileStore(FileStore):
         """
 
         assert chunkStoreConstructor is not None
+        self.BINARY_STORE = chunkStoreConstructor.BINARY_STORE
+
+        more_args = {}
+        if self.BINARY_STORE:
+            more_args['delimiter'] = BinaryFileStore.delimiter
+            more_args['lineSep'] = BinaryFileStore.lineSep
 
         super().__init__(dbDir,
                          dbName,
                          isLineNoKey,
                          storeContentHash,
                          ensureDurability,
-                         defaultFile=defaultFile)
+                         defaultFile=defaultFile,
+                         **more_args)
 
         self.chunkSize = chunkSize
         self.itemNum = 1  # chunk size counter
@@ -72,6 +84,10 @@ class ChunkedFileStore(FileStore):
                                   ensureDurability)
 
         self._initDB(dbDir, dbName)
+
+    @property
+    def is_binary_store(self):
+        return self.BINARY_STORE
 
     def _prepareFiles(self, dbDir, dbName, defaultFile):
 
@@ -144,7 +160,6 @@ class ChunkedFileStore(FileStore):
         :param index: chunk index
         :return: opened chunk
         """
-
         return self._chunkCreator(ChunkedFileStore._chunkIndexToFileName(index))
 
     def _get_key_location(self, key) -> (int, int):
@@ -180,7 +195,8 @@ class ChunkedFileStore(FileStore):
         # the store size
         chunk_no, offset = self._get_key_location(key)
         with self._openChunk(chunk_no) as chunk:
-            return chunk.get(str(offset))
+            offset = str(offset).encode() if chunk.is_binary_store else str(offset)
+            return chunk.get(offset)
 
     def reset(self) -> None:
         """

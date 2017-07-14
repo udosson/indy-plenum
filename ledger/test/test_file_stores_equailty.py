@@ -50,7 +50,6 @@ def test_equality_to_text_file_store(tmpdir):
         textStore.put(value)
         assert textStore.get(value) == chunkedStore.get(value)
 
-    assert list(chunkedStore.iterator()) == \
-           list(textStore.iterator())
+    assert list(chunkedStore.iterator()) == list(textStore.iterator())
 
 

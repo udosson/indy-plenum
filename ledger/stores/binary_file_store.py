@@ -4,16 +4,27 @@ from ledger.stores.file_store import FileStore
 
 
 class BinaryFileStore(FileStore):
+    BINARY_STORE = True
+    BINARY_FILE_EXT = '.bin'
+    # This is the separator between key and value
+    delimiter = b'\t'
+    # TODO: This line separator might conflict with some data format.
+    # So prefix the value data in the file with size and only read those
+    # number of bytes.
+    lineSep = b'\n\x07\n\x01'
+
     def __init__(self, dbDir, dbName, isLineNoKey: bool=False,
                  storeContentHash: bool=True, ensureDurability: bool=True):
         # This is the separator between key and value
-        self.delimiter = b"\t"
-        # TODO: This line separator might conflict with some data format.
-        # So prefix the value data in the file with size and only read those
-        # number of bytes.
-        self.lineSep = b'\n\x07\n\x01'
-        super().__init__(dbDir, dbName, isLineNoKey, storeContentHash,
-                         ensureDurability)
+        # self.delimiter = b'\t'
+        # # TODO: This line separator might conflict with some data format.
+        # # So prefix the value data in the file with size and only read those
+        # # number of bytes.
+        # self.lineSep = b'\n\x07\n\x01'
+        super().__init__(dbDir, dbName, isLineNoKey=isLineNoKey,
+                         storeContentHash=storeContentHash,
+                         ensureDurability=ensureDurability,
+                         delimiter=self.delimiter, lineSep=self.lineSep)
         self._initDB(dbDir, dbName)
 
     @staticmethod
@@ -22,7 +33,8 @@ class BinaryFileStore(FileStore):
 
     def _initDB(self, dbDir, dbName):
         super()._initDB(dbDir, dbName)
-        self.dbPath = os.path.join(dbDir, "{}.bin".format(dbName))
+        self.dbPath = os.path.join(dbDir, "{}{}".format(dbName,
+                                                        self.BINARY_FILE_EXT))
         self.dbFile = open(self.dbPath, mode="a+b", buffering=0)
 
     def put(self, value, key=None):
@@ -42,6 +54,7 @@ class BinaryFileStore(FileStore):
         return super().iterator(includeKey, includeValue, prefix)
 
     def _lines(self):
+        self.dbFile.seek(0)
         return (line.strip(self.lineSep) for line in
                 self.dbFile.read().split(self.lineSep)
                 if len(line.strip(self.lineSep)) != 0)
