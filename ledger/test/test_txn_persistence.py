@@ -22,7 +22,7 @@ def testTxnPersistence(ledger):
         reply = Reply(result={
             "identifier": identifier,
             "reqId": 1,
-            "op": "buy"
+            MSG_TYPE: "buy"
         })
         sizeBeforeInsert = ledger.size
         ledger.append(reply.result)

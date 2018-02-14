@@ -38,7 +38,7 @@ from plenum.common.stacks import nodeStackClass
 from plenum.common.startable import Status, Mode
 from plenum.common.constants import REPLY, POOL_LEDGER_TXNS, \
     LEDGER_STATUS, CONSISTENCY_PROOF, CATCHUP_REP, REQACK, REQNACK, REJECT, \
-    OP_FIELD_NAME, POOL_LEDGER_ID, LedgerState, MULTI_SIGNATURE, MULTI_SIGNATURE_PARTICIPANTS, \
+    MSG_TYPE, POOL_LEDGER_ID, LedgerState, MULTI_SIGNATURE, MULTI_SIGNATURE_PARTICIPANTS, \
     MULTI_SIGNATURE_SIGNATURE, MULTI_SIGNATURE_VALUE
 from plenum.common.txn_util import idr_from_req_data
 from plenum.common.types import f
@@ -340,32 +340,32 @@ class Client(Motor,
         # Do not print result of transaction type `POOL_LEDGER_TXNS` on the CLI
         ledgerTxnTypes = (POOL_LEDGER_TXNS, LEDGER_STATUS, CONSISTENCY_PROOF,
                           CATCHUP_REP)
-        printOnCli = not excludeFromCli and msg.get(OP_FIELD_NAME) not \
+        printOnCli = not excludeFromCli and msg.get(MSG_TYPE) not \
             in ledgerTxnTypes
         logger.info("Client {} got msg from node {}: {}".
                     format(self.name, frm, msg),
                     extra={"cli": printOnCli})
-        if OP_FIELD_NAME in msg:
-            if msg[OP_FIELD_NAME] in ledgerTxnTypes and self.ledger:
+        if MSG_TYPE in msg:
+            if msg[MSG_TYPE] in ledgerTxnTypes and self.ledger:
                 cMsg = node_message_factory.get_instance(**msg)
-                if msg[OP_FIELD_NAME] == POOL_LEDGER_TXNS:
+                if msg[MSG_TYPE] == POOL_LEDGER_TXNS:
                     self.poolTxnReceived(cMsg, frm)
-                if msg[OP_FIELD_NAME] == LEDGER_STATUS:
+                if msg[MSG_TYPE] == LEDGER_STATUS:
                     self.ledgerManager.processLedgerStatus(cMsg, frm)
-                if msg[OP_FIELD_NAME] == CONSISTENCY_PROOF:
+                if msg[MSG_TYPE] == CONSISTENCY_PROOF:
                     self.ledgerManager.processConsistencyProof(cMsg, frm)
-                if msg[OP_FIELD_NAME] == CATCHUP_REP:
+                if msg[MSG_TYPE] == CATCHUP_REP:
                     self.ledgerManager.processCatchupRep(cMsg, frm)
-            elif msg[OP_FIELD_NAME] == REQACK:
+            elif msg[MSG_TYPE] == REQACK:
                 self.reqRepStore.addAck(msg, frm)
                 self._got_expected(msg, frm)
-            elif msg[OP_FIELD_NAME] == REQNACK:
+            elif msg[MSG_TYPE] == REQNACK:
                 self.reqRepStore.addNack(msg, frm)
                 self._got_expected(msg, frm)
-            elif msg[OP_FIELD_NAME] == REJECT:
+            elif msg[MSG_TYPE] == REJECT:
                 self.reqRepStore.addReject(msg, frm)
                 self._got_expected(msg, frm)
-            elif msg[OP_FIELD_NAME] == REPLY:
+            elif msg[MSG_TYPE] == REPLY:
                 result = msg[f.RESULT.nm]
                 identifier = idr_from_req_data(msg[f.RESULT.nm])
                 reqId = msg[f.RESULT.nm][f.REQ_ID.nm]
@@ -451,7 +451,7 @@ class Client(Motor,
         :return: list of request results from all nodes
         """
         return {frm: msg for msg, frm in self.inBox
-                if msg[OP_FIELD_NAME] == REPLY and
+                if msg[MSG_TYPE] == REPLY and
                 msg[f.RESULT.nm][f.REQ_ID.nm] == reqId and
                 idr_from_req_data(msg[f.RESULT.nm]) == identifier}
 
@@ -710,12 +710,12 @@ class Client(Motor,
                 if not received:
                     register.pop(key)
 
-        if msg[OP_FIELD_NAME] == REQACK:
+        if msg[MSG_TYPE] == REQACK:
             drop(msg, self.expectingAcksFor)
-        elif msg[OP_FIELD_NAME] == REPLY:
+        elif msg[MSG_TYPE] == REPLY:
             drop(msg[f.RESULT.nm], self.expectingAcksFor)
             drop(msg[f.RESULT.nm], self.expectingRepliesFor)
-        elif msg[OP_FIELD_NAME] in (REQNACK, REJECT):
+        elif msg[MSG_TYPE] in (REQNACK, REJECT):
             drop(msg, self.expectingAcksFor)
             drop(msg, self.expectingRepliesFor)
         else:

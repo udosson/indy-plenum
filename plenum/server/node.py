@@ -24,12 +24,12 @@ from plenum.common.constants import POOL_LEDGER_ID, DOMAIN_LEDGER_ID, \
     NODE_BLACKLISTER_SUFFIX, NODE_PRIMARY_STORAGE_SUFFIX, HS_FILE, HS_LEVELDB, \
     TXN_TYPE, LEDGER_STATUS, \
     CLIENT_STACK_SUFFIX, PRIMARY_SELECTION_PREFIX, VIEW_CHANGE_PREFIX, \
-    OP_FIELD_NAME, CATCH_UP_PREFIX, NYM, \
+    MSG_TYPE, CATCH_UP_PREFIX, NYM, \
     GET_TXN, DATA, TXN_TIME, VERKEY, \
     TARGET_NYM, ROLE, STEWARD, TRUSTEE, ALIAS, \
     NODE_IP, BLS_PREFIX, NodeHooks
 from plenum.common.exceptions import SuspiciousNode, SuspiciousClient, \
-    MissingNodeOp, InvalidNodeOp, InvalidNodeMsg, InvalidClientMsgType, \
+    MissingMsgType, InvalidNodeOp, InvalidNodeMsg, InvalidClientMsgType, \
     InvalidClientRequest, BaseExc, \
     InvalidClientMessageException, KeysNotFoundException as REx, BlowUp
 from plenum.common.has_file_storage import HasFileStorage
@@ -1515,7 +1515,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
 
         try:
             message = node_message_factory.get_instance(**msg)
-        except (MissingNodeOp, InvalidNodeOp) as ex:
+        except (MissingMsgType, InvalidNodeOp) as ex:
             raise ex
         except Exception as ex:
             raise InvalidNodeMsg(str(ex))
@@ -1623,8 +1623,8 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
                 idr_from_req_data(msg)]):
             cls = self._client_request_class
             needStaticValidation = True
-        elif OP_FIELD_NAME in msg:
-            op = msg[OP_FIELD_NAME]
+        elif MSG_TYPE in msg:
+            op = msg[MSG_TYPE]
             cls = node_message_factory.get_type(op)
             if cls not in (Batch, LedgerStatus, CatchupReq):
                 raise InvalidClientMsgType(cls, msg.get(f.REQ_ID.nm))

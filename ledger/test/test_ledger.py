@@ -148,7 +148,7 @@ def test_recover_ledger_new_fields_to_txns_added(tempdir):
     newOrderedFields = OrderedDict([
         ("identifier", (str, str)),
         ("reqId", (str, int)),
-        ("op", (str, str)),
+        (MSG_TYPE, (str, str)),
         ("newField", (str, str))
     ])
     restartedLedger = create_ledger_text_file_storage(

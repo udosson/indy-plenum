@@ -8,7 +8,7 @@ from plenum.common.messages.node_messages import ViewChangeDone, Nomination, Bat
     Propagate, PrePrepare, Prepare, Commit, Checkpoint, ThreePCState, CheckpointState, \
     Reply, InstanceChange, LedgerStatus, ConsistencyProof, CatchupReq, CatchupRep, ViewChangeDone, \
     CurrentState, MessageReq, MessageRep, ElectionType, ThreePhaseType
-from plenum.common.constants import OP_FIELD_NAME, MESSAGE_REQUEST, MESSAGE_RESPONSE
+from plenum.common.constants import MSG_TYPE, MESSAGE_REQUEST, MESSAGE_RESPONSE
 from plenum.common.types import f
 from plenum.common.util import getCallableName
 from plenum.test.test_client import TestClient
@@ -17,7 +17,7 @@ from plenum.test.test_client import TestClient
 def delayer(seconds, op, senderFilter=None, instFilter: int = None):
     def inner(rx):
         msg, frm = rx
-        if msg[OP_FIELD_NAME] == op and \
+        if msg[MSG_TYPE] == op and \
                 (not senderFilter or frm == senderFilter) and \
                 (instFilter is None or (f.INST_ID.nm in msg and msg[
                     f.INST_ID.nm] == instFilter)):
@@ -56,7 +56,7 @@ def delayerMsgTuple(seconds, opType, senderFilter=None,
 
 def delayerMsgDict(seconds, op, instFilter: int = None):
     def inner(msg):
-        if op == msg[OP_FIELD_NAME] and \
+        if op == msg[MSG_TYPE] and \
                 (instFilter is None or (f.INST_ID.nm in msg and msg[
                     f.INST_ID.nm] == instFilter)):
             return seconds

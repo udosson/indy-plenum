@@ -177,7 +177,7 @@ class InvalidNodeMsg(InvalidNodeMessageException):
     pass
 
 
-class MissingNodeOp(InvalidNodeMsg):
+class MissingMsgType(InvalidNodeMsg):
     pass
 
 

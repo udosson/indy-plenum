@@ -21,7 +21,7 @@ from indy.error import ErrorCode, IndyError
 from ledger.genesis_txn.genesis_txn_file_util import genesis_txn_file
 from plenum.client.client import Client
 from plenum.client.wallet import Wallet
-from plenum.common.constants import DOMAIN_LEDGER_ID, OP_FIELD_NAME, REPLY, REQACK, REQNACK, REJECT,\
+from plenum.common.constants import DOMAIN_LEDGER_ID, MSG_TYPE, REPLY, REQACK, REQNACK, REJECT,\
     CURRENT_PROTOCOL_VERSION
 from plenum.common.messages.node_messages import Reply, PrePrepare, Prepare, Commit
 from plenum.common.types import f
@@ -202,7 +202,7 @@ def checkResponseCorrectnessFromNodes(receivedMsgs: Iterable, reqId: int,
 
 def getRepliesFromClientInbox(inbox, reqId) -> list:
     return list({_: msg for msg, _ in inbox if
-                 msg[OP_FIELD_NAME] == REPLY and msg[f.RESULT.nm]
+                 msg[MSG_TYPE] == REPLY and msg[f.RESULT.nm]
                  [f.REQ_ID.nm] == reqId}.values())
 
 
@@ -526,7 +526,7 @@ def checkSufficientCommitReqRecvd(replicas: Iterable[TestReplica], viewNo: int,
 
 
 def checkReqAck(client, node, idr, reqId, update: Dict[str, str] = None):
-    rec = {OP_FIELD_NAME: REQACK, f.REQ_ID.nm: reqId, f.IDENTIFIER.nm: idr}
+    rec = {MSG_TYPE: REQACK, f.REQ_ID.nm: reqId, f.IDENTIFIER.nm: idr}
     if update:
         rec.update(update)
     expected = (rec, node.clientstack.name)
@@ -537,7 +537,7 @@ def checkReqAck(client, node, idr, reqId, update: Dict[str, str] = None):
 
 
 def checkReqNack(client, node, idr, reqId, update: Dict[str, str] = None):
-    rec = {OP_FIELD_NAME: REQNACK, f.REQ_ID.nm: reqId, f.IDENTIFIER.nm: idr}
+    rec = {MSG_TYPE: REQNACK, f.REQ_ID.nm: reqId, f.IDENTIFIER.nm: idr}
     if update:
         rec.update(update)
     expected = (rec, node.clientstack.name)
@@ -550,7 +550,7 @@ def checkReqNack(client, node, idr, reqId, update: Dict[str, str] = None):
 def checkReplyCount(client, idr, reqId, count):
     senders = set()
     for msg, sdr in client.inBox:
-        if msg[OP_FIELD_NAME] == REPLY and \
+        if msg[MSG_TYPE] == REPLY and \
                         msg[f.RESULT.nm][f.IDENTIFIER.nm] == idr and \
                         msg[f.RESULT.nm][f.REQ_ID.nm] == reqId:
             senders.add(sdr)
@@ -567,7 +567,7 @@ def wait_for_replies(looper, client, idr, reqId, count, custom_timeout=None):
 def checkReqNackWithReason(client, reason: str, sender: str):
     found = False
     for msg, sdr in client.inBox:
-        if msg[OP_FIELD_NAME] == REQNACK and reason in msg.get(
+        if msg[MSG_TYPE] == REQNACK and reason in msg.get(
                 f.REASON.nm, "") and sdr == sender:
             found = True
             break
@@ -591,7 +591,7 @@ def waitReqNackWithReason(looper, client, reason: str, sender: str):
 def checkRejectWithReason(client, reason: str, sender: str):
     found = False
     for msg, sdr in client.inBox:
-        if msg[OP_FIELD_NAME] == REJECT and reason in msg.get(
+        if msg[MSG_TYPE] == REJECT and reason in msg.get(
                 f.REASON.nm, "") and sdr == sender:
             found = True
             break

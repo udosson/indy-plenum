@@ -1,6 +1,6 @@
 import pytest
 
-from plenum.common.exceptions import MissingNodeOp, InvalidNodeOp
+from plenum.common.exceptions import MissingMsgType, InvalidNodeOp
 from plenum.common.messages.fields import NonNegativeNumberField, AnyValueField, HexField, BooleanField, Base58Field
 from plenum.common.messages.message_base import MessageBase
 from plenum.common.messages.node_message_factory import MessageFactory, NodeMessageFactory
@@ -19,7 +19,7 @@ def test_message_factory_module_is_not_found_fails():
 
 def test_message_factory_missed_op_fails(factory):
     msg = {'a': 0, 'b': 'bar'}
-    with pytest.raises(MissingNodeOp):
+    with pytest.raises(MissingMsgType):
         factory.get_instance(**msg)
 
 

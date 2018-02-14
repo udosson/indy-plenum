@@ -151,7 +151,11 @@ class LedgerState(IntEnum):
     # complete for the ledger
 
 
-OP_FIELD_NAME = "op"
+MSG_TYPE = "msgType"
+MSG_VERSION = "msgVersion"
+
+PROTOCOL_VERSION = "protocolVersion"
+PLUGIN_FIELDS = "pluginData"
 
 CLIENT_STACK_SUFFIX = "C"
 CLIENT_BLACKLISTER_SUFFIX = "BLC"

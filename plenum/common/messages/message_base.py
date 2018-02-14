@@ -2,8 +2,8 @@ from collections import OrderedDict
 from operator import itemgetter
 from typing import Mapping
 
-from plenum.common.constants import OP_FIELD_NAME
-from plenum.common.messages.fields import FieldValidator
+from plenum.common.constants import MSG_TYPE, MSG_VERSION, PROTOCOL_VERSION, PLUGIN_FIELDS
+from plenum.common.messages.fields import FieldValidator, NonNegativeNumberField, AnyMapField
 
 
 class MessageValidator(FieldValidator):
@@ -71,6 +71,11 @@ class MessageValidator(FieldValidator):
 
 class MessageBase(Mapping, MessageValidator):
     typename = None
+    version = 0
+    default_schema = (
+        (PROTOCOL_VERSION, NonNegativeNumberField(optional=True)),
+        (PLUGIN_FIELDS, AnyMapField(optional=True, nullable=True)),
+    )
 
     def __init__(self, *args, **kwargs):
         assert not (args and kwargs), \
@@ -78,7 +83,9 @@ class MessageBase(Mapping, MessageValidator):
 
         if kwargs:
             # op field is not required since there is self.typename
-            kwargs.pop(OP_FIELD_NAME, None)
+            kwargs.pop(MSG_TYPE, None)
+
+        self.schema = self.default_schema + self.schema
 
         argsLen = len(args or kwargs)
         assert argsLen <= len(self.schema), \
@@ -118,13 +125,15 @@ class MessageBase(Mapping, MessageValidator):
         Return a dictionary form.
         """
         m = self._fields.copy()
-        m[OP_FIELD_NAME] = self.typename
-        m.move_to_end(OP_FIELD_NAME, False)
+        m[MSG_VERSION] = self.version
+        m.move_to_end(MSG_VERSION, False)
+        m[MSG_TYPE] = self.typename
+        m.move_to_end(MSG_TYPE, False)
         return m
 
     @property
     def __name__(self):
-        return self.typename
+        return self.typename + ":" + self.version
 
     def __iter__(self):
         return self._fields.values().__iter__()

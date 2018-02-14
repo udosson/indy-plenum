@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Any, Iterable, Dict
 
-from plenum.common.constants import BATCH, OP_FIELD_NAME
+from plenum.common.constants import BATCH, MSG_TYPE
 from plenum.common.prepare_batch import split_messages_on_batches
 from stp_core.common.constants import CONNECTION_PREFIX
 from stp_core.crypto.signer import Signer
@@ -149,7 +149,7 @@ class Batched(MessageProcessor):
         return self.msg_len_val.is_len_less_than_limit(batch_len)
 
     def doProcessReceived(self, msg, frm, ident):
-        if OP_FIELD_NAME in msg and msg[OP_FIELD_NAME] == BATCH:
+        if MSG_TYPE in msg and msg[MSG_TYPE] == BATCH:
             if f.MSGS.nm in msg and isinstance(msg[f.MSGS.nm], list):
                 # Removing ping and pong messages from Batch
                 relevantMsgs = []

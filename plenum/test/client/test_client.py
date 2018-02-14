@@ -6,7 +6,7 @@ from stp_core.loop.eventually import eventually
 from plenum.common.exceptions import MissingSignature
 from plenum.common.exceptions import NotConnectedToAny
 from stp_core.common.log import getlogger
-from plenum.common.constants import OP_FIELD_NAME, REPLY, REQACK
+from plenum.common.constants import MSG_TYPE, REPLY, REQACK
 from plenum.common.types import f
 from plenum.server.node import Node
 from plenum.test import waits
@@ -41,7 +41,7 @@ def checkResponseRecvdFromNodes(client, expectedCount: int,
     acks = set()
     replies = set()
     for (resp, nodeNm) in client.inBox:
-        op = resp.get(OP_FIELD_NAME)
+        op = resp.get(MSG_TYPE)
         if op == REPLY:
             reqId = resp.get(f.RESULT.nm, {}).get(f.REQ_ID.nm)
             coll = replies
@@ -183,7 +183,7 @@ def testReplyWhenRepliesFromExactlyFPlusOneNodesAreSame(looper,
                    retryWait=1, timeout=responseTimeout))
 
     replies = (msg for msg, frm in client1.inBox
-               if msg[OP_FIELD_NAME] == REPLY and
+               if msg[MSG_TYPE] == REPLY and
                msg[f.RESULT.nm][f.REQ_ID.nm] == request.reqId)
 
     # change two responses to something different
@@ -216,7 +216,7 @@ def testReplyWhenRequestAlreadyExecuted(looper, nodeSet, client1, sent1):
         assertLength([response for response in client1.inBox
                       if (response[0].get(f.RESULT.nm) and
                           response[0][f.RESULT.nm][f.REQ_ID.nm] == sent1.reqId) or
-                      (response[0].get(OP_FIELD_NAME) == REQACK and
+                      (response[0].get(MSG_TYPE) == REQACK and
                        response[0].get(f.REQ_ID.nm) == sent1.reqId)],
                      originalRequestResponsesLen + duplicateRequestRepliesLen)
 

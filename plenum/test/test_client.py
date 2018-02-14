@@ -16,7 +16,7 @@ from plenum.common.types import f
 from plenum.common.util import bootstrapClientKeys
 from plenum.test.test_stack import StackedTester, getTestableStack
 from plenum.test.testable import spyable
-from plenum.common.constants import OP_FIELD_NAME
+from plenum.common.constants import MSG_TYPE
 
 
 logger = getlogger()
@@ -111,7 +111,7 @@ def genTestClientProvider(nodes=None,
 def getAcksFromInbox(client, reqId, maxm=None) -> set:
     acks = set()
     for msg, sender in client.inBox:
-        if msg[OP_FIELD_NAME] == REQACK and msg[f.REQ_ID.nm] == reqId:
+        if msg[MSG_TYPE] == REQACK and msg[f.REQ_ID.nm] == reqId:
             acks.add(sender)
             if maxm and len(acks) == maxm:
                 break
@@ -121,7 +121,7 @@ def getAcksFromInbox(client, reqId, maxm=None) -> set:
 def getNacksFromInbox(client, reqId, maxm=None) -> dict:
     nacks = {}
     for msg, sender in client.inBox:
-        if msg[OP_FIELD_NAME] == REQNACK and msg[f.REQ_ID.nm] == reqId:
+        if msg[MSG_TYPE] == REQNACK and msg[f.REQ_ID.nm] == reqId:
             nacks[sender] = msg[f.REASON.nm]
             if maxm and len(nacks) == maxm:
                 break
@@ -131,7 +131,7 @@ def getNacksFromInbox(client, reqId, maxm=None) -> dict:
 def getRepliesFromInbox(client, reqId, maxm=None) -> dict:
     replies = {}
     for msg, sender in client.inBox:
-        if msg[OP_FIELD_NAME] == REPLY and msg[f.RESULT.nm][f.REQ_ID.nm] == reqId:
+        if msg[MSG_TYPE] == REPLY and msg[f.RESULT.nm][f.REQ_ID.nm] == reqId:
             replies[sender] = msg
             if maxm and len(replies) == maxm:
                 break
