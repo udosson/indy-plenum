@@ -180,6 +180,8 @@ class InvalidNodeMsg(InvalidNodeMessageException):
 class MissingMsgType(InvalidNodeMsg):
     pass
 
+class MissingMsgData(InvalidNodeMsg):
+    pass
 
 class InvalidNodeOp(InvalidNodeMsg):
     pass

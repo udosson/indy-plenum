@@ -151,8 +151,9 @@ class LedgerState(IntEnum):
     # complete for the ledger
 
 
-MSG_TYPE = "msgType"
-MSG_VERSION = "msgVersion"
+MSG_TYPE = "type"
+MSG_VERSION = "version"
+MSG_DATA = "msg"
 
 PROTOCOL_VERSION = "protocolVersion"
 PLUGIN_FIELDS = "pluginData"

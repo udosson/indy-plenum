@@ -1,8 +1,8 @@
 import sys
 from importlib import import_module
 
-from plenum.common.constants import MSG_TYPE
-from plenum.common.exceptions import MissingMsgType, InvalidNodeOp
+from plenum.common.constants import MSG_TYPE, MSG_VERSION, MSG_DATA
+from plenum.common.exceptions import MissingMsgType, InvalidNodeOp, MissingMsgData
 from plenum.common.messages.fields import IterableField, MapField
 from plenum.common.messages.message_base import MessageBase
 
@@ -35,18 +35,23 @@ class MessageFactory:
         return classes
 
     def get_instance(self, **message_raw):
+        # TODO: Create a separate Message type
         message_type = message_raw.get(MSG_TYPE, None)
-        message_version = message_raw.get(MSG_TYPE, 0)
+        message_version = message_raw.get(MSG_VERSION, 0)
+        msg_data = message_raw.get(MSG_DATA, None)
+
         if message_type is None:
             raise MissingMsgType
-        cls = self.get_type(message_type, message_version)
-        msg = self.__msg_without_op_field(message_raw)
-        return cls(**msg)
+        if msg_data is None:
+            raise MissingMsgData
 
-    def get_type(self, message_op):
-        message_cls = self.__classes.get(message_op, None)
+        cls = self.get_type(message_type, message_version)
+        return cls(msg_data)
+
+    def get_type(self, message_type, message_version):
+        message_cls = self.__classes.get(message_type, None)
         if message_cls is None:
-            raise InvalidNodeOp(message_op)
+            raise MissingMsgType(message_type)
         return message_cls
 
     @staticmethod
@@ -71,18 +76,6 @@ class MessageFactory:
         # has to be the last because of: 'str' week ref error
         if not issubclass(obj, MessageBase):
             return "must be a subclass of 'MessageBase'"
-
-    # TODO: it is a workaround which helps extend some fields from
-    # downstream projects, should be removed after we find a better way
-    # to do this
-    def update_schemas_by_field_type(self, old_field_type, new_field_type):
-        for cls in self.__classes.values():
-            new_schema = []
-            for name, field in cls.schema:
-                field = self._transform_field(
-                    field, old_field_type, new_field_type)
-                new_schema.append((name, field))
-            cls.schema = tuple(new_schema)
 
     def _transform_field(self, field, old_field_type, new_field_type):
         if isinstance(field, old_field_type):

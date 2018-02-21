@@ -85,3 +85,17 @@ def test_serialize_complex_dict():
                 'id': 2,
                 'name': 'Dave'
             }]})
+
+def test_serialize_msgpack_blob():
+    value1 = {3: 'a', 1: 'b', 2: 'c'}
+    msgpack_value1 = serializer.serialize(value1)
+
+    value2 = {'ccc': 'bbb', 'aaa': msgpack_value1}
+    msgpack_value2 = serializer.serialize(value2)
+    deserialized_value2 = serializer.deserialize(msgpack_value2)
+    assert deserialized_value2 == value2
+
+    deserialized_value1 = serializer.deserialize(deserialized_value2['aaa'])
+    assert deserialized_value1 == value1
+
+

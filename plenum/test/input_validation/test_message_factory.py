@@ -58,37 +58,3 @@ def test_node_message_factory_module_is_loaded():
     NodeMessageFactory()
 
 
-def test_message_factory_can_replace_field(factory):
-    # check precondition
-    msg = {'op': 'Message2', 'a': 0, 'b': 'foo'}
-    assert isinstance(factory.get_instance(**msg), Message2)
-
-    factory.update_schemas_by_field_type(AnyValueField, NonNegativeNumberField)
-
-    with pytest.raises(TypeError) as exc_info:
-        factory.get_instance(**msg)
-    exc_info.match("expected types 'int', got 'str'")
-
-
-def test_message_factory_can_replace_iterable_field(factory):
-    # check precondition
-    msg = {'op': 'Message3', 'a': 0, 'b': [True, False]}
-    assert isinstance(factory.get_instance(**msg), Message3)
-
-    factory.update_schemas_by_field_type(BooleanField, Base58Field)
-
-    with pytest.raises(TypeError) as exc_info:
-        factory.get_instance(**msg)
-    exc_info.match("expected types 'str', got 'bool'")
-
-
-def test_message_factory_can_replace_map_field(factory):
-    # check precondition
-    msg = {'op': 'Message4', 'a': 0, 'b': {'123': 'abc'}}
-    assert isinstance(factory.get_instance(**msg), Message4)
-
-    factory.update_schemas_by_field_type(HexField, NonNegativeNumberField)
-
-    with pytest.raises(TypeError) as exc_info:
-        factory.get_instance(**msg)
-    exc_info.match("expected types 'int', got 'str'")

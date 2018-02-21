@@ -1,9 +1,11 @@
 from collections import OrderedDict
+from ctypes.wintypes import MSG
 from operator import itemgetter
 from typing import Mapping
 
-from plenum.common.constants import MSG_TYPE, MSG_VERSION, PROTOCOL_VERSION, PLUGIN_FIELDS
+from plenum.common.constants import MSG_TYPE, MSG_VERSION, PROTOCOL_VERSION, PLUGIN_FIELDS, MSG_DATA
 from plenum.common.messages.fields import FieldValidator, NonNegativeNumberField, AnyMapField
+from plenum.common.types import f
 
 
 class MessageValidator(FieldValidator):
@@ -68,10 +70,10 @@ class MessageValidator(FieldValidator):
     def __error_msg_prefix(self):
         return 'validation error [{}]:'.format(self.__class__.__name__)
 
-
 class MessageBase(Mapping, MessageValidator):
     typename = None
     version = 0
+
     default_schema = (
         (PROTOCOL_VERSION, NonNegativeNumberField(optional=True)),
         (PLUGIN_FIELDS, AnyMapField(optional=True, nullable=True)),
@@ -80,10 +82,6 @@ class MessageBase(Mapping, MessageValidator):
     def __init__(self, *args, **kwargs):
         assert not (args and kwargs), \
             '*args, **kwargs cannot be used together'
-
-        if kwargs:
-            # op field is not required since there is self.typename
-            kwargs.pop(MSG_TYPE, None)
 
         self.schema = self.default_schema + self.schema
 
@@ -124,12 +122,12 @@ class MessageBase(Mapping, MessageValidator):
         """
         Return a dictionary form.
         """
-        m = self._fields.copy()
-        m[MSG_VERSION] = self.version
-        m.move_to_end(MSG_VERSION, False)
-        m[MSG_TYPE] = self.typename
-        m.move_to_end(MSG_TYPE, False)
-        return m
+        # TODO: Create a separate Message type
+        return {
+            MSG_TYPE: self.typename,
+            MSG_VERSION: self.version,
+            MSG_DATA: self._fields.copy()
+        }
 
     @property
     def __name__(self):
@@ -151,7 +149,7 @@ class MessageBase(Mapping, MessageValidator):
         return self._fields.values()
 
     def __str__(self):
-        return "{}{}".format(self.typename, dict(self.items()))
+        return "{}-{}: {}".format(self.typename, self.version, dict(self.items()))
 
     def __repr__(self):
         return self.__str__()
@@ -172,3 +170,4 @@ class MessageBase(Mapping, MessageValidator):
 
     def __contains__(self, key):
         return key in self._fields
+

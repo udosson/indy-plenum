@@ -2,6 +2,7 @@ import asyncio
 import time
 from collections import OrderedDict, namedtuple
 from ledger.util import F
+from plenum.common.constants import MSG_TYPE
 
 Reply = namedtuple("REPLY", ['result'])
 

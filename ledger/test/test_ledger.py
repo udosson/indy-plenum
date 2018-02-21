@@ -12,6 +12,7 @@ from ledger.test.helper import NoTransactionRecoveryLedger, \
     check_ledger_generator, create_ledger_text_file_storage, create_default_ledger, random_txn
 from ledger.test.test_file_hash_store import generateHashes
 from ledger.util import ConsistencyVerificationFailed, F
+from plenum.common.constants import MSG_TYPE
 
 
 def b64e(s):
