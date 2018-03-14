@@ -183,6 +183,16 @@ class ConstantField(FieldBase):
         if val != self.value:
             return 'has to be equal {}'.format(self.value)
 
+class EnumField(FieldBase):
+    _base_types = None
+
+    def __init__(self, expected_values, **kwargs):
+        super().__init__(**kwargs)
+        self.expected_values = expected_values
+
+    def _specific_validation(self, val):
+        if val not in self.expected_values:
+            return 'has to be one of {}'.format(str(self.expected_values))
 
 class IterableField(FieldBase):
     _base_types = (list, tuple)
@@ -610,3 +620,13 @@ class ProtocolVersionField(FieldBase):
             return
         if not PlenumProtocolVersion.has_value(val):
             return 'Unknown protocol version value {}'.format(val)
+
+
+class ComplexField(FieldBase):
+    _base_types = (dict,)
+
+    def __init__(self, schema,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.schema = schema
+

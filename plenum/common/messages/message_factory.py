@@ -35,18 +35,14 @@ class MessageFactory:
         return classes
 
     def get_instance(self, **message_raw):
-        # TODO: Create a separate Message type
         message_type = message_raw.get(MSG_TYPE, None)
         message_version = message_raw.get(MSG_VERSION, 0)
-        msg_data = message_raw.get(MSG_DATA, None)
 
         if message_type is None:
             raise MissingMsgType
-        if msg_data is None:
-            raise MissingMsgData
 
         cls = self.get_type(message_type, message_version)
-        return cls(msg_data)
+        return cls()
 
     def get_type(self, message_type, message_version):
         message_cls = self.__classes.get(message_type, None)

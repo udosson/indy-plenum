@@ -2,6 +2,7 @@
 
 class Message {
 +type: str
++version: str
 +from: str
 +serialization: str
 +msgSerialized: bytes
@@ -13,7 +14,7 @@ class Message {
 -schemaMetadata: dict
 }
 
-abstract class MessagePayload {
+class MessagePayload {
 +protocolVersion
 +data
 +metadata
@@ -59,7 +60,8 @@ NodeMessage <|-- PrePrepareData
 NodeMessage <|-- PrepareData
 NodeMessage <|-- CommitData
 
-note as N
+note as N1
+<b>Receiving a Message</b>
 1) Receive MSG via ZMQ in MsgPack format
 2) Deserialize Msg to dict
 3) Validation1: validate fields against `schema`
@@ -68,5 +70,19 @@ note as N
 6) Validation3: validate `data` against `schemaData`
 7) Validation4: validate `metadata` against `schemaMetadata`
 end note
+
+note as N2
+<b>Sending a Message</b>
+1) Instantiate a Message
+2) Pass
+1) Receive MSG via ZMQ in MsgPack format
+2) Deserialize Msg to dict
+3) Validation1: validate fields against `schema`
+4) Validation2: verify signature if needed
+5) Deserialize the message payload to dict
+6) Validation3: validate `data` against `schemaData`
+7) Validation4: validate `metadata` against `schemaMetadata`
+end note
+
 
 @enduml

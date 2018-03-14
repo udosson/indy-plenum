@@ -1,14 +1,17 @@
-from collections import OrderedDict
+from abc import ABCMeta, abstractmethod
+from collections import OrderedDict, namedtuple
 from ctypes.wintypes import MSG
 from operator import itemgetter
-from typing import Mapping
+from typing import Mapping, Iterable, List
 
-from plenum.common.constants import MSG_TYPE, MSG_VERSION, PROTOCOL_VERSION, PLUGIN_FIELDS, MSG_DATA
-from plenum.common.messages.fields import FieldValidator, NonNegativeNumberField, AnyMapField
+from plenum.common.constants import MSG_TYPE, MSG_VERSION, PROTOCOL_VERSION, PLUGIN_FIELDS, MSG_DATA, MSG_FROM, MSG_SER, \
+    MSG_SIGNATURE, MSG_PAYLOAD_DATA, MSG_PAYLOAD_PROTOCOL_VERSION, MSG_PAYLOAD_METADATA, MSG_PAYLOAD_PLUGIN_DATA
+from plenum.common.messages.fields import FieldValidator, NonNegativeNumberField, AnyMapField, NonEmptyStringField, \
+    SerializedValueField
 from plenum.common.types import f
 
 
-class MessageValidator(FieldValidator):
+class MessageValidator():
     # the schema has to be an ordered iterable because the message class
     # can be create with positional arguments __init__(*args)
 
@@ -19,8 +22,8 @@ class MessageValidator(FieldValidator):
     def __init__(self, schema_is_strict=True):
         self.schema_is_strict = schema_is_strict
 
-    def validate(self, dct):
-        self._validate_fields_with_schema(dct, self.schema)
+    def validate(self, dct, schema):
+        self._validate_fields_with_schema(dct, schema)
         self._validate_message(dct)
 
     def _validate_fields_with_schema(self, dct, schema):
@@ -70,38 +73,37 @@ class MessageValidator(FieldValidator):
     def __error_msg_prefix(self):
         return 'validation error [{}]:'.format(self.__class__.__name__)
 
-class MessageBase(Mapping, MessageValidator):
-    typename = None
-    version = 0
+SchemaField = namedtuple("SchemaField", ["fld", "fldName", "fldType"])
 
-    default_schema = (
-        (PROTOCOL_VERSION, NonNegativeNumberField(optional=True)),
-        (PLUGIN_FIELDS, AnyMapField(optional=True, nullable=True)),
-    )
+class MessageBase(Mapping, metaclass=ABCMeta):
 
-    def __init__(self, *args, **kwargs):
+
+    @abstractmethod
+    @property
+    def schema(self) -> List[SchemaField]:
+        pass
+
+    def init(self, *args, **kwargs):
         assert not (args and kwargs), \
             '*args, **kwargs cannot be used together'
-
-        self.schema = self.default_schema + self.schema
 
         argsLen = len(args or kwargs)
         assert argsLen <= len(self.schema), \
             "number of parameters should be less than or equal to " \
             "the number of fields in schema, but it was {}".format(argsLen)
 
-        super().__init__()
-        input_as_dict = kwargs if kwargs else self._join_with_schema(args)
+        input_as_dict = kwargs if kwargs else self.__join_with_schema(args, self.schema)
 
-        self.validate(input_as_dict)
+        # TODO: support renaming of values in input dict without a need to rename fields in Message Class
+        for fld, fldName, fldType in self.schema:
+            self.fld = input_as_dict[fldName]
+        # self._fields = OrderedDict(
+        #     (name, input_as_dict[name])
+        #     for name, _ in self.schema
+        #     if name in input_as_dict)
 
-        self._fields = OrderedDict(
-            (name, input_as_dict[name])
-            for name, _ in self.schema
-            if name in input_as_dict)
-
-    def _join_with_schema(self, args):
-        return dict(zip(map(itemgetter(0), self.schema), args))
+    def __join_with_schema(self, args, schema):
+        return dict(zip(map(itemgetter(1), schema), args))
 
     def __getattr__(self, item):
         return self._fields[item]
@@ -114,7 +116,7 @@ class MessageBase(Mapping, MessageValidator):
             return values[key]
         raise TypeError("Invalid argument type.")
 
-    def _asdict(self):
+    def as_dict(self):
         return self.__dict__
 
     @property
@@ -122,12 +124,7 @@ class MessageBase(Mapping, MessageValidator):
         """
         Return a dictionary form.
         """
-        # TODO: Create a separate Message type
-        return {
-            MSG_TYPE: self.typename,
-            MSG_VERSION: self.version,
-            MSG_DATA: self._fields.copy()
-        }
+        return self._fields
 
     @property
     def __name__(self):

@@ -1,12 +1,8 @@
-from typing import Mapping
-
 from common.serializers.base58_serializer import Base58Serializer
 from common.serializers.base64_serializer import Base64Serializer
 from common.serializers.json_serializer import JsonSerializer
 from common.serializers.msgpack_serializer import MsgPackSerializer
-from common.serializers.signing_serializer import SigningSerializer
 
-signing_serializer = SigningSerializer()
 ledger_txn_serializer = MsgPackSerializer()
 ledger_hash_serializer = MsgPackSerializer()
 domain_state_serializer = JsonSerializer()
@@ -17,15 +13,5 @@ state_roots_serializer = Base58Serializer()
 proof_nodes_serializer = Base64Serializer()
 multi_signature_value_serializer = MsgPackSerializer()
 
+transport_serialization = MsgPackSerializer()
 
-# TODO: separate data, metadata and signature, so that we don't need to have topLevelKeysToIgnore
-def serialize_msg_for_signing(msg: Mapping, topLevelKeysToIgnore=None):
-    """
-    Serialize a message for signing.
-
-    :param msg: the message to sign
-    :param topLevelKeysToIgnore: the top level keys of the Mapping that should
-    not be included in the serialized form
-    :return: a uft-8 encoded version of `msg`
-    """
-    return signing_serializer.serialize(msg, topLevelKeysToIgnore=topLevelKeysToIgnore)
