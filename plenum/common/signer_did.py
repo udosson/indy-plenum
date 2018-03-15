@@ -19,7 +19,7 @@ class DidIdentity:
         if (verkey is None or verkey == '') and (rawVerkey is None or rawVerkey == ''):
             if identifier:
                 self._identifier = identifier
-                if (verkey is None and rawVerkey is None):
+                if verkey is None and rawVerkey is None:
                     self._verkey = None
                 else:
                     self._verkey = ''
