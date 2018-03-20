@@ -7,7 +7,7 @@ from typing import List, Dict, Optional, Any, Set, Tuple, Callable
 import math
 
 import plenum.server.node
-from common.serializers.serialization import serialize_msg_for_signing, state_roots_serializer
+from common.serializers.serialization import state_roots_serializer
 from crypto.bls.bls_bft_replica import BlsBftReplica
 from orderedset import OrderedSet
 from plenum.common.config_util import getConfig
@@ -856,6 +856,7 @@ class Replica(HasActionQueue, MessageProcessor, HookManager):
 
     def _process_valid_preprepare(self, pre_prepare, sender):
         # TODO: rename to apply_pre_prepare
+
         old_state_root = self.stateRootHash(pre_prepare.ledgerId, to_str=False)
         why_not_applied = self._apply_pre_prepare(pre_prepare, sender)
         if why_not_applied is not None:

@@ -1,40 +1,35 @@
-from abc import ABCMeta, abstractmethod
-from collections import OrderedDict, namedtuple
-from ctypes.wintypes import MSG
-from operator import itemgetter
-from typing import Mapping, Iterable, List
+from abc import ABCMeta
+from typing import Sequence
 
-from plenum.common.constants import MSG_TYPE, MSG_VERSION, PROTOCOL_VERSION, PLUGIN_FIELDS, MSG_DATA, MSG_FROM, MSG_SER, \
-    MSG_SIGNATURE, MSG_PAYLOAD_DATA, MSG_PAYLOAD_PROTOCOL_VERSION, MSG_PAYLOAD_METADATA, MSG_PAYLOAD_PLUGIN_DATA
-from plenum.common.messages.fields import FieldValidator, NonNegativeNumberField, AnyMapField, NonEmptyStringField, \
-    SerializedValueField
-from plenum.common.types import f
+from plenum.common.messages.fields import FieldBase, IterableField
+from plenum.common.tools import lazy_field
 
 
 class MessageValidator():
     # the schema has to be an ordered iterable because the message class
     # can be create with positional arguments __init__(*args)
 
-    schema = ()
-    optional = False
     schema_is_strict = True
 
-    def __init__(self, schema_is_strict=True):
-        self.schema_is_strict = schema_is_strict
+    def validate(self):
+        self._validate_fields_with_schema(self.attrs_as_dict)
+        self._validate_message(self.attrs_as_dict)
 
-    def validate(self, dct, schema):
-        self._validate_fields_with_schema(dct, schema)
-        self._validate_message(dct)
-
-    def _validate_fields_with_schema(self, dct, schema):
+    def _validate_fields_with_schema(self, dct):
         if not isinstance(dct, dict):
             self._raise_invalid_type(dct)
-        schema_dct = dict(schema)
-        required_fields = filter(lambda x: not x[1].optional, schema)
-        required_field_names = map(lambda x: x[0], required_fields)
+        schema_dct = self.validator_schema
+
+        # required_fields = filter(lambda x: not x[1].optional, schema_dct)
+        # required_field_names = map(lambda x: x[0], required_fields)
+        required_field_names = [field_name
+                                for field_name, validator in schema_dct.items()
+                                if not validator.optional]
         missed_required_fields = set(required_field_names) - set(dct)
+
         if missed_required_fields:
             self._raise_missed_fields(*missed_required_fields)
+
         for k, v in dct.items():
             if k not in schema_dct:
                 if self.schema_is_strict:
@@ -43,6 +38,14 @@ class MessageValidator():
                 validation_error = schema_dct[k].validate(v)
                 if validation_error:
                     self._raise_invalid_fields(k, v, validation_error)
+
+                # validate complex fields
+                if isinstance(v, MessageBase):
+                    v.validate()
+                if isinstance(v, Sequence):
+                    for _v in v:
+                        if isinstance(_v, MessageBase):
+                            _v.validate()
 
     def _validate_message(self, dct):
         return None
@@ -73,98 +76,145 @@ class MessageValidator():
     def __error_msg_prefix(self):
         return 'validation error [{}]:'.format(self.__class__.__name__)
 
-SchemaField = namedtuple("SchemaField", ["fld", "fldName", "fldType"])
 
-class MessageBase(Mapping, metaclass=ABCMeta):
+class InputField(object):
+
+    def __call__(self, obj, name, validator, initial=None):
+        return InputFieldAttribute(obj, name, validator, initial)
+
+    def __init__(self):
+        print("AAAA")
+
+    def __get__(self, obj, objtype):
+        print("EEEE")
+        #return getattr(obj, self.name, self.value)
+        return None
+    #
+    # def __set__(self, obj, value):
+    #     print("FFFF")
+    #     #setattr(obj, self.name, value)
+    #     obj._attrs_by_names[self.name] = value
+
+class InputFieldAttribute(object):
+
+    def __init__(self, obj, name, validator, initial=None):
+        obj.validator_schema[name] = validator
+        obj._attrs_by_names[name] = initial
+        # self.value = initial
+        self.name = name
+        # self.validator = validator
+        print("DDD")
+
+    def __get__(self, obj, objtype):
+        print("EEEE")
+        #return getattr(obj, self.name, self.value)
+        return obj._attrs_by_names[self.name]
+    def __set__(self, obj, value):
+        print("FFFF")
+        #setattr(obj, self.name, value)
+        obj._attrs_by_names[self.name] = value
 
 
-    @abstractmethod
+class MessageBase(MessageValidator, metaclass=ABCMeta):
+
+    def __init__(self) -> None:
+        self.validator_schema = {}
+        self._fields = {}
+
+    # @property
+    # def validator_schema(self):
+    #     return {
+    #         name: validator
+    #         for name, (attr_name, validator) in self._attrs_by_names.items()
+    #     }
+
     @property
-    def schema(self) -> List[SchemaField]:
+    def as_dict(self):
+        return self._fields
+        # {
+        #     name: getattr(self, attr_name)
+        #     for name, (attr_name, validator) in self._attrs_by_names.items()
+        # }
+
+    # @lazy_field
+    # def _attrs_by_names(self):
+    #     return {
+    #         attr.name: (attr_name, attr.validator)
+    #         for attr_name, attr in vars(type(self)).items()
+    #         if isinstance(attr, InputField)
+    #     }
+
+    def init_from_dict(self, input_as_dict):
+        for name, validator in self.validator_schema.items():
+            if name not in input_as_dict:
+                continue
+            value = input_as_dict[name]
+            if isinstance(validator, IterableField):
+                value = self.__get_list_value(validator, value)
+            elif isinstance(validator, MessageField):
+                value = self.__get_msg_value(validator, value)
+            setattr(self, name, value)
+
+    def __get_msg_value(self, validator, input_as_dict):
+        cls = validator.cls
+        value = cls()
+        value.init_from_dict(input_as_dict)
+        return value
+
+    def __get_list_value(self, validator: IterableField, input_as_list):
+        inner_validator = validator.inner_field_type
+        if not isinstance(inner_validator, MessageField):
+            return input_as_list
+
+        value = []
+        for input_as_dict in input_as_list:
+            value.append(self.__get_msg_value(inner_validator, input_as_dict))
+
+        return value
+
+    def __getattr__(self, name):
+        if name == 'validator_schema':
+            return super().__getattr__(name)
+        if name in self.validator_schema:
+            return self._fields[name]
+        return super().__getattr__(name)
+
+    def __setattr__(self, name, value):
+        if name == 'validator_schema':
+            super().__setattr__(name, value)
+        elif name in self.validator_schema:
+            self._fields[name] = value
+        else:
+            super().__setattr__(name, value)
+
+
+class MessageField(FieldBase):
+    _base_types = (MessageBase,)
+
+    def __init__(self, cls,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.cls = cls
+
+    def _specific_validation(self, val):
         pass
 
-    def init(self, *args, **kwargs):
-        assert not (args and kwargs), \
-            '*args, **kwargs cannot be used together'
+# def input_field(attr_name, validator):
+#     attr_name = attr_name
+#     validator = validator
+#
+#     def wrapper(prop):
+#
+#         def wrapped(self):
+#             if attr_name not in self.validator_schema:
+#                 self.validator_schema[attr_name] = validator
+#             return self._attrs_by_names.get(attr_name, None)
+#
+#         return wrapped
+#
+#     return wrapper
 
-        argsLen = len(args or kwargs)
-        assert argsLen <= len(self.schema), \
-            "number of parameters should be less than or equal to " \
-            "the number of fields in schema, but it was {}".format(argsLen)
-
-        input_as_dict = kwargs if kwargs else self.__join_with_schema(args, self.schema)
-
-        # TODO: support renaming of values in input dict without a need to rename fields in Message Class
-        for fld, fldName, fldType in self.schema:
-            self.fld = input_as_dict[fldName]
-        # self._fields = OrderedDict(
-        #     (name, input_as_dict[name])
-        #     for name, _ in self.schema
-        #     if name in input_as_dict)
-
-    def __join_with_schema(self, args, schema):
-        return dict(zip(map(itemgetter(1), schema), args))
-
-    def __getattr__(self, item):
-        return self._fields[item]
-
-    def __getitem__(self, key):
-        values = list(self._fields.values())
-        if isinstance(key, slice):
-            return values[key]
-        if isinstance(key, int):
-            return values[key]
-        raise TypeError("Invalid argument type.")
-
-    def as_dict(self):
-        return self.__dict__
-
-    @property
-    def __dict__(self):
-        """
-        Return a dictionary form.
-        """
-        return self._fields
-
-    @property
-    def __name__(self):
-        return self.typename + ":" + self.version
-
-    def __iter__(self):
-        return self._fields.values().__iter__()
-
-    def __len__(self):
-        return len(self._fields)
-
-    def items(self):
-        return self._fields.items()
-
-    def keys(self):
-        return self._fields.keys()
-
-    def values(self):
-        return self._fields.values()
-
-    def __str__(self):
-        return "{}-{}: {}".format(self.typename, self.version, dict(self.items()))
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __eq__(self, other):
-        if not issubclass(other.__class__, self.__class__):
-            return False
-        return self._asdict() == other._asdict()
-
-    def __hash__(self):
-        h = 1
-        for index, value in enumerate(list(self.__iter__())):
-            h = h * (index + 1) * (hash(value) + 1)
-        return h
-
-    def __dir__(self):
-        return self.keys()
-
-    def __contains__(self, key):
-        return key in self._fields
-
+def input_field(msg: MessageBase, field: str, attr_name: str, validator, value=None):
+    msg.validator_schema[attr_name] = validator
+    msg._fields[attr_name] = field
+    return value

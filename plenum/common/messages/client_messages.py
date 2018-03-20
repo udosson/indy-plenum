@@ -7,7 +7,7 @@ from plenum.common.messages.fields import NetworkIpAddressField, \
     ChooseField, ConstantField, DestNodeField, VerkeyField, DestNymField, \
     RoleField, TxnSeqNoField, IdentifierField, \
     NonNegativeNumberField, SignatureField, MapField, LimitedLengthStringField, \
-    ProtocolVersionField, LedgerIdField
+    ProtocolVersionField, LedgerIdField, FieldValidator
 from plenum.common.messages.message_base import MessageValidator, MessageBase
 from plenum.common.types import OPERATION, f
 from plenum.config import ALIAS_FIELD_LIMIT, DIGEST_FIELD_LIMIT, \
@@ -68,9 +68,9 @@ class ClientOperationField(MessageValidator):
     def __init__(self, *args, **kwargs):
         strict = kwargs.get("schema_is_strict", True)
         self.operations = {
-            NODE: ClientNodeOperation(schema_is_strict=strict),
-            NYM: ClientNYMOperation(schema_is_strict=strict),
-            GET_TXN: ClientGetTxnOperation(schema_is_strict=strict),
+            NODE: ClientNodeOperation(),
+            NYM: ClientNYMOperation(),
+            GET_TXN: ClientGetTxnOperation(),
         }
         super().__init__(*args, **kwargs)
 
@@ -93,7 +93,7 @@ class ClientOperationField(MessageValidator):
             op.validate(dct)
 
 
-class ClientMessageValidator(MessageValidator):
+class ClientMessageValidator(FieldValidator):
     schema = (
         (f.IDENTIFIER.nm, IdentifierField(optional=True, nullable=True)),
         (f.REQ_ID.nm, NonNegativeNumberField()),

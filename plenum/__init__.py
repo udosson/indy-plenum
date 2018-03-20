@@ -48,10 +48,10 @@ def setup_plugins():
             PLUGIN_CLIENT_REQUEST_FIELDS.update(plugin_globals['CLIENT_REQUEST_FIELDS'])
 
     # Reloading message types since some some schemas would have been changed
-    import plenum.common.messages.node_messages
-    import plenum.common.messages.node_message_factory
-    importlib.reload(plenum.common.messages.node_messages)
-    importlib.reload(plenum.common.messages.node_message_factory)
+    # import plenum.common.messages.node_messages
+    # import plenum.common.messages.node_message_factory
+    # importlib.reload(plenum.common.messages.node_messages)
+    # importlib.reload(plenum.common.messages.node_message_factory)
 
 
 setup_plugins()

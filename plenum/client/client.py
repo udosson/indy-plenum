@@ -29,7 +29,7 @@ from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.ledger import Ledger
 from plenum.common.ledger_manager import LedgerManager
 from plenum.common.message_processor import MessageProcessor
-from plenum.common.messages.node_message_factory import node_message_factory
+from plenum.common.messages.message_factory import node_message_factory
 from plenum.common.messages.node_messages import Reply, LedgerStatus
 from plenum.common.motor import Motor
 from plenum.common.plugin_helper import loadPlugins

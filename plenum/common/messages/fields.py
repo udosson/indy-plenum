@@ -5,11 +5,11 @@ from abc import ABCMeta, abstractmethod
 
 import base58
 
-from crypto.bls.bls_multi_signature import MultiSignatureValue
-from plenum.common.constants import VALID_LEDGER_IDS
-from plenum import PLUGIN_LEDGER_IDS
-from plenum.common.plenum_protocol_version import PlenumProtocolVersion
 from common.error import error
+from crypto.bls.bls_multi_signature import MultiSignatureValue
+from plenum import PLUGIN_LEDGER_IDS
+from plenum.common.constants import VALID_LEDGER_IDS
+from plenum.common.plenum_protocol_version import PlenumProtocolVersion
 from plenum.config import BLS_MULTI_SIG_LIMIT
 
 
@@ -127,7 +127,7 @@ class LimitedLengthStringField(FieldBase):
 
 
 class FixedLengthField(FieldBase):
-    _base_types = (str, )
+    _base_types = (str,)
 
     def __init__(self, length: int, **kwargs):
         if not isinstance(length, int):
@@ -164,8 +164,7 @@ class RoleField(FieldBase):
 
 
 class NonNegativeNumberField(FieldBase):
-
-    _base_types = (int, )
+    _base_types = (int,)
 
     def _specific_validation(self, val):
         if val < 0:
@@ -183,6 +182,7 @@ class ConstantField(FieldBase):
         if val != self.value:
             return 'has to be equal {}'.format(self.value)
 
+
 class EnumField(FieldBase):
     _base_types = None
 
@@ -193,6 +193,7 @@ class EnumField(FieldBase):
     def _specific_validation(self, val):
         if val not in self.expected_values:
             return 'has to be one of {}'.format(str(self.expected_values))
+
 
 class IterableField(FieldBase):
     _base_types = (list, tuple)
@@ -272,23 +273,6 @@ class ChooseField(FieldBase):
         if val not in self._possible_values:
             return "expected one of '{}', unknown value '{}'" \
                 .format(', '.join(map(str, self._possible_values)), val)
-
-
-class MessageField(FieldBase):
-    _base_types = None
-
-    def __init__(self, message_type, **kwargs):
-        self._message_type = message_type
-        super().__init__(**kwargs)
-
-    def _specific_validation(self, val):
-        if isinstance(val, self._message_type):
-            return
-        try:
-            self._message_type(**val)
-        except TypeError as ex:
-            return "value {} cannot be represented as {} due to: {}" \
-                .format(val, self._message_type.typename, ex)
 
 
 class LedgerIdField(ChooseField):
@@ -620,13 +604,3 @@ class ProtocolVersionField(FieldBase):
             return
         if not PlenumProtocolVersion.has_value(val):
             return 'Unknown protocol version value {}'.format(val)
-
-
-class ComplexField(FieldBase):
-    _base_types = (dict,)
-
-    def __init__(self, schema,
-                 **kwargs):
-        super().__init__(**kwargs)
-        self.schema = schema
-

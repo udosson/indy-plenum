@@ -12,6 +12,7 @@ multi_sig_store_serializer = JsonSerializer()
 state_roots_serializer = Base58Serializer()
 proof_nodes_serializer = Base64Serializer()
 multi_signature_value_serializer = MsgPackSerializer()
+signing_serialization = MsgPackSerializer()
 
 transport_serialization = MsgPackSerializer()
 

@@ -26,23 +26,8 @@ class ClientAuthNr:
     @abstractmethod
     def authenticate(self,
                      msg: bytes,
-                     identifier: str,
-                     signature: str) -> str:
-        """
-        Authenticate the client's message with the signature provided.
-
-        :param identifier: some unique identifier
-        :param signature: a utf-8 and base58 encoded signature
-        :param msg: the message to authenticate (serialized to bytes)
-        :return: the identifier; an exception of type SigningException is
-            raised if the signature is not valid
-        """
-
-    @abstractmethod
-    def authenticate_multi(self,
-                           msg: bytes,
-                           signatures: Dict[str, str],
-                           threshold: int = None):
+                     signatures: Dict[str, str],
+                     threshold: int = None):
         """
         :param msg:
         :param signatures: A mapping from identifiers to signatures.
@@ -78,17 +63,9 @@ class ClientAuthNr:
 class NaclAuthNr(ClientAuthNr):
     def authenticate(self,
                      msg: bytes,
-                     identifier: str,
-                     signature: str):
-        signatures = {identifier: signature}
-        return self.authenticate_multi(msg,
-                                       signatures=signatures)
-
-    def authenticate_multi(self,
-                           msg: bytes,
-                           signatures: Dict[str, str],
-                           threshold: int = None,
-                           verifier: Verifier = DidVerifier):
+                     signatures: Dict[str, str],
+                     threshold: int = None,
+                     verifier: Verifier = DidVerifier):
         num_sigs = len(signatures)
         if threshold is not None:
             if num_sigs < threshold:

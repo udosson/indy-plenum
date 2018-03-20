@@ -32,13 +32,18 @@ class MessageAuthenticator:
             return
 
         identifiers = set()
-        typ = req_data.get(OPERATION, {}).get(TXN_TYPE)
+        typ = msg.typename
+        msg_payload = msg.msg_serialized
+        signatures = {v.frm: v.value for v in msg.signature.values}
+        threshold = msg.signature.threshold
+
+
         for authenticator in self._authenticators:
             if authenticator.is_query(typ):
                 return set()
             if not authenticator.is_write(typ):
                 continue
-            rv = authenticator.authenticate(req_data) or set()
+            rv = authenticator.authenticate(msg_payload, signatures, threshold) or set()
             identifiers.update(rv)
 
         if not identifiers:

@@ -2,8 +2,9 @@ from binascii import hexlify
 from typing import Dict
 
 import base58
-from common.serializers.serialization import serialize_msg_for_signing
 from libnacl import randombytes
+
+from common.serializers.serialization import signing_serialization
 from plenum.common.types import f
 from plenum.common.util import rawToFriendly, friendlyToRaw
 from stp_core.crypto.nacl_wrappers import SigningKey, Signer as NaclSigner
@@ -118,7 +119,7 @@ class DidSigner(DidIdentity, Signer):
         """
         Return a signature for the given message.
         """
-        ser = serialize_msg_for_signing(msg, topLevelKeysToIgnore=[f.SIG.nm])
+        ser = signing_serialization.serialize(msg)
         bsig = self.naclSigner.signature(ser)
         sig = base58.b58encode(bsig)
         return sig
