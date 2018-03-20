@@ -2538,9 +2538,13 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
                              stateRoot, txnRoot) -> List:
         committedTxns = reqHandler.commit(len(reqs), stateRoot, txnRoot)
         self.updateSeqNoMap(committedTxns)
-        self.sendRepliesToClients(
-            map(self.update_txn_with_extra_data, committedTxns),
-            ppTime)
+        updated_committed_txns = list(map(self.update_txn_with_extra_data, committedTxns))
+        self.execute_hook(NodeHooks.PRE_SEND_REPLY, committed_txns=updated_committed_txns,
+                          pp_time=ppTime)
+        self.sendRepliesToClients(updated_committed_txns, ppTime)
+        self.execute_hook(NodeHooks.POST_SEND_REPLY,
+                          committed_txns=updated_committed_txns,
+                          pp_time=ppTime)
         return committedTxns
 
     def default_executer(self, ledger_id, pp_time, reqs: List[Request],
