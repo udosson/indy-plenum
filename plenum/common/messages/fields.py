@@ -51,7 +51,7 @@ class FieldBase(FieldValidator, metaclass=ABCMeta):
         :return: error message or None
         """
 
-        if self.nullable and val is None:
+        if (self.nullable or self.optional) and val is None:
             return
         type_er = self.__type_check(val)
         if type_er:
