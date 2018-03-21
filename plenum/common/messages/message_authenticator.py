@@ -3,7 +3,7 @@ from typing import Optional
 from plenum.common.constants import TXN_TYPE
 from common.error import error
 from plenum.common.exceptions import NoAuthenticatorFound
-from plenum.common.messages.message import Message
+from plenum.common.messages.message import Message, SignedMessage
 from plenum.common.types import OPERATION
 from plenum.server.client_authn import ClientAuthNr
 
@@ -28,15 +28,11 @@ class MessageAuthenticator:
         :param req_data:
         :return:
         """
-        if not msg.signature:
-            return
-
         identifiers = set()
         typ = msg.typename
         msg_payload = msg.msg_serialized
         signatures = {v.frm: v.value for v in msg.signature.values}
         threshold = msg.signature.threshold
-
 
         for authenticator in self._authenticators:
             if authenticator.is_query(typ):

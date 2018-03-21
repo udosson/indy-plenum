@@ -62,7 +62,7 @@ class Message(MessageBase, Generic[D, MD]):
             ("frm", MSG_FROM, NonEmptyStringField()),
             ("protocol_version", MSG_PAYLOAD_PROTOCOL_VERSION, NonNegativeNumberField(optional=True)),
             ("data", MSG_PAYLOAD_DATA, MessageField(cls=self.dataCls)),
-            ("metadata", MSG_PAYLOAD_METADATA, MessageField(cls=self.metadataCls)),
+            ("metadata", MSG_PAYLOAD_METADATA, MessageField(cls=self.metadataCls, optional=True)),
             ("plugin_data", MSG_PAYLOAD_PLUGIN_DATA, AnyMapField(optional=True))
         )
 

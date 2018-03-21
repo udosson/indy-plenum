@@ -72,22 +72,32 @@ class MessageBase(MessageValidator, metaclass=ABCMeta):
     schema = ()
 
     @property
-    def as_dict(self):
-        return {
-            schema_item[1]: getattr(self, schema_item[0])
-            for schema_item in self.schema
-        }
-
-    @property
     def validator_schema(self):
         return {
             schema_item[1]: schema_item[2]
             for schema_item in self.schema
         }
 
+    @property
+    def _as_dict(self):
+        return {
+            schema_item[1]: getattr(self, schema_item[0])
+            for schema_item in self.schema
+        }
+
     def validate(self):
-        self.validate_fields_with_schema(self.validator_schema, self.as_dict)
-        self.validate_message(self.as_dict)
+        attr_as_dict = self._as_dict
+        self.validate_fields_with_schema(self.validator_schema, attr_as_dict)
+        self.validate_message(attr_as_dict)
+
+    def to_dict(self):
+        res = {}
+        for schema_item in self.schema:
+            attr = getattr(self, schema_item[0])
+            if isinstance(attr, MessageBase):
+                attr = attr.to_dict()
+            res[schema_item[1]] = attr
+        return res
 
     def init_from_dict(self, input_as_dict):
         for field, attr_name, validator in self.schema:

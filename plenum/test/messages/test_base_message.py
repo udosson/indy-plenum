@@ -1,4 +1,4 @@
-from typing import Sequence, List
+from typing import List
 
 import pytest
 
@@ -149,11 +149,15 @@ def test_validator_schema():
     assert isinstance(validator_schema["bbb"], LimitedLengthStringField)
 
 
-def test_attrs_as_dict(test_msg_inited):
-    attrs_as_dict = test_msg_inited.as_dict
+def test_attrs_to_dict(complex_msg_inited):
+    attrs_as_dict = complex_msg_inited.to_dict()
     assert isinstance(attrs_as_dict, dict)
-    assert attrs_as_dict["aaa"] == 111
-    assert attrs_as_dict["bbb"] == "222"
+    assert attrs_as_dict["f5"] == "111"
+    assert isinstance(attrs_as_dict["f666"], dict)
+    assert attrs_as_dict["f666"]["f333"] == "222"
+    assert isinstance(attrs_as_dict["f666"]["f4"], dict)
+    assert attrs_as_dict["f666"]["f4"]["f111"] == 333
+    assert attrs_as_dict["f666"]["f4"]["f222"] == "444"
 
 
 def test_init_complex_msg(complex_msg_inited):

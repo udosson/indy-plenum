@@ -9,23 +9,41 @@ from plenum.common.messages.fields import NonNegativeNumberField, IterableField,
     SerializedValueField, SignatureField, TieAmongField, AnyValueField, RequestIdentifierField, TimestampField, \
     LedgerIdField, MerkleRootField, Base58Field, LedgerInfoField, AnyField, ChooseField, AnyMapField, \
     LimitedLengthStringField, BlsMultiSignatureField
+from plenum.common.messages.message import Message, MessageData, MessageMetadata, D
 from plenum.common.messages.message_base import \
     MessageBase
 from plenum.common.types import f
 from plenum.config import NAME_FIELD_LIMIT, DIGEST_FIELD_LIMIT, SENDER_CLIENT_FIELD_LIMIT, HASH_FIELD_LIMIT, \
     SIGNATURE_FIELD_LIMIT, TIE_IDR_FIELD_LIMIT, BLS_SIG_LIMIT
 
+# BASE NODE MSG
 
-class Nomination(MessageBase):
-    typename = NOMINATE
+class NodeMessage(Message[D, MessageMetadata]):
+    pass
+
+# NOMINATION
+
+class NominationData(MessageData):
 
     schema = (
-        (f.NAME.nm, LimitedLengthStringField(max_length=NAME_FIELD_LIMIT)),
-        (f.INST_ID.nm, NonNegativeNumberField()),
-        (f.VIEW_NO.nm, NonNegativeNumberField()),
-        (f.ORD_SEQ_NO.nm, NonNegativeNumberField()),
+        ("name", f.NAME.nm, LimitedLengthStringField(max_length=NAME_FIELD_LIMIT)),
+        ("instId", f.INST_ID.nm, NonNegativeNumberField()),
+        ("viewNo", f.VIEW_NO.nm, NonNegativeNumberField()),
+        ("ordSeqNo", f.ORD_SEQ_NO.nm, NonNegativeNumberField()),
     )
 
+    def __init__(self, name: str = None, instId: int = None, viewNo: int = None,
+                 ordSeqNo: int = None) -> None:
+        self.name = name
+        self.instId = instId
+        self.viewNo = viewNo
+        self.ordSeqNo = ordSeqNo
+
+
+class Nomination(NodeMessage[NominationData]):
+    typename = NOMINATE
+    version = 0
+    dataCls = NominationData
 
 class Batch(MessageBase):
     typename = BATCH
