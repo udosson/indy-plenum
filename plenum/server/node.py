@@ -11,9 +11,7 @@ from crypto.bls.bls_key_manager import LoadBLSKeyError
 from intervaltree import IntervalTree
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.genesis_txn.genesis_txn_initiator_from_file import GenesisTxnInitiatorFromFile
-from ledger.hash_stores.file_hash_store import FileHashStore
 from ledger.hash_stores.hash_store import HashStore
-from ledger.hash_stores.memory_hash_store import MemoryHashStore
 from ledger.util import F
 from plenum.bls.bls_bft_factory import create_default_bls_bft_factory
 from plenum.bls.bls_crypto_factory import create_default_bls_crypto_factory
@@ -21,7 +19,7 @@ from plenum.client.wallet import Wallet
 from plenum.common.config_util import getConfig
 from plenum.common.constants import POOL_LEDGER_ID, DOMAIN_LEDGER_ID, \
     CLIENT_BLACKLISTER_SUFFIX, CONFIG_LEDGER_ID, \
-    NODE_BLACKLISTER_SUFFIX, NODE_PRIMARY_STORAGE_SUFFIX, HS_FILE, HS_LEVELDB, \
+    NODE_BLACKLISTER_SUFFIX, NODE_PRIMARY_STORAGE_SUFFIX, \
     TXN_TYPE, LEDGER_STATUS, \
     CLIENT_STACK_SUFFIX, PRIMARY_SELECTION_PREFIX, VIEW_CHANGE_PREFIX, \
     CATCH_UP_PREFIX, NYM, \
@@ -59,9 +57,8 @@ from plenum.common.types import PLUGIN_TYPE_VERIFICATION, \
 from plenum.common.util import friendlyEx, getMaxFailures, pop_keys, \
     compare_3PC_keys, get_utc_epoch
 from plenum.common.verifier import DidVerifier
-from plenum.persistence.leveldb_hash_store import LevelDbHashStore
 from plenum.persistence.req_id_to_txn import ReqIdrToTxn
-from plenum.persistence.storage import Storage, initStorage, initKeyValueStorage
+from plenum.persistence.storage import Storage, initStorage
 from plenum.server.blacklister import Blacklister
 from plenum.server.blacklister import SimpleBlacklister
 from plenum.server.client_authn import ClientAuthNr, SimpleAuthNr, CoreAuthNr
@@ -92,6 +89,7 @@ from plenum.server.validator_info_tool import ValidatorNodeInfoTool
 from plenum.common.config_helper import PNodeConfigHelper
 from state.pruning_state import PruningState
 from state.state import State
+from storage.helper import initKeyValueStorage, initHashStore
 from stp_core.common.log import getlogger
 from stp_core.crypto.signer import Signer
 from stp_core.network.exceptions import RemoteNotFound
@@ -303,10 +301,9 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
 
         # BE CAREFUL HERE
         # This controls which message types are excluded from signature
-        # verification. These are still subject to RAET's signature verification
-        # but client signatures will not be checked on these. Expressly
-        # prohibited from being in this is ClientRequest and Propagation,
-        # which both require client signature verification
+        # verification. Expressly prohibited from being in this is
+        # ClientRequest and Propagation, which both require client
+        # signature verification
         self.authnWhitelist = (
             Nomination,
             Primary,
@@ -449,9 +446,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
         self.register_req_handler(CONFIG_LEDGER_ID, self.configReqHandler)
 
     def getConfigLedger(self):
-        hashStore = LevelDbHashStore(
-            dataDir=self.dataLocation, fileNamePrefix='config')
-        return Ledger(CompactMerkleTree(hashStore=hashStore),
+        return Ledger(CompactMerkleTree(hashStore=self.getHashStore('config')),
                       dataDir=self.dataLocation,
                       fileName=self.config.configTransactionsFile,
                       ensureDurability=self.config.EnsureLedgerDurability)
@@ -526,7 +521,8 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
         Notifies node about the fact that view changed to let it
         prepare for election
         """
-        self.master_replica.on_view_change_start()
+        for replica in self.replicas:
+            replica.on_view_change_start()
         logger.debug("{} resetting monitor stats at view change start".
                      format(self))
         self.monitor.reset()
@@ -718,15 +714,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
         """
         Create and return a hashStore implementation based on configuration
         """
-        hsConfig = self.config.hashStore['type'].lower()
-        if hsConfig == HS_FILE:
-            return FileHashStore(dataDir=self.dataLocation,
-                                 fileNamePrefix=name)
-        elif hsConfig == HS_LEVELDB:
-            return LevelDbHashStore(dataDir=self.dataLocation,
-                                    fileNamePrefix=name)
-        else:
-            return MemoryHashStore()
+        return initHashStore(self.dataLocation, name, self.config)
 
     def get_new_ledger_manager(self) -> LedgerManager:
         ledger_sync_order = self.ledger_ids
@@ -883,6 +871,9 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
     def get_name_by_rank(self, rank, nodeReg=None):
         return self.poolManager.get_name_by_rank(rank, nodeReg=nodeReg)
 
+    def get_rank_by_name(self, name, nodeReg=None):
+        return self.poolManager.get_rank_by_name(name, nodeReg=nodeReg)
+
     def newViewChanger(self):
         if self.view_changer:
             return self.view_changer
@@ -938,7 +929,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
 
     def closeAllKVStores(self):
         # Clear leveldb lock files
-        logger.debug("{} closing level dbs".format(self), extra={"cli": False})
+        logger.debug("{} closing key-value storages".format(self), extra={"cli": False})
         for ledgerId in self.ledgerManager.ledgerRegistry:
             state = self.getState(ledgerId)
             if state:
@@ -1089,6 +1080,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
         - Check protocol instances. See `checkInstances()`
 
         """
+        _prev_status = self.status
         if self.isGoing():
             if self.connectedNodeCount == self.totalNodes:
                 self.status = Status.started
@@ -1104,12 +1096,22 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
             logger.info(
                 '{} lost connection to primary of master'.format(self))
             self.lost_master_primary()
+        elif _prev_status == Status.starting and self.status == Status.started_hungry \
+                and self.lost_primary_at is not None \
+                and self.master_primary_name is not None:
+            """
+            Such situation may occur if the pool has come back to reachable consensus but
+            primary is still disconnected, so view change proposal makes sense now.
+            """
+            self._schedule_view_change()
+
         if self.isReady():
             self.checkInstances()
-            for node in joined:
-                self.send_current_state_to_lagging_node(node)
+        else:
+            logger.debug("{} joined nodes {} but status is {}".format(self, joined, self.status))
         # Send ledger status whether ready (connected to enough nodes) or not
         for node in joined:
+            self.send_current_state_to_lagging_node(node)
             self.send_ledger_status_to_newly_connected_node(node)
 
     def request_ledger_status_from_nodes(self, ledger_id):
@@ -2329,30 +2331,57 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
                         "".format(self))
             self.view_changer.on_primary_loss()
 
-    # TODO: consider moving this to pool manager
-    def lost_master_primary(self):
-        """
-        Schedule an primary connection check which in turn can send a view
-        change message
-        :return: whether view change started
-        """
-        self.lost_primary_at = time.perf_counter()
-
+    def _schedule_view_change(self):
         logger.debug('{} scheduling a view change in {} sec'.
                      format(self, self.config.ToleratePrimaryDisconnection))
         self._schedule(self.propose_view_change,
                        self.config.ToleratePrimaryDisconnection)
 
+    # TODO: consider moving this to pool manager
+    def lost_master_primary(self):
+        """
+        Schedule an primary connection check which in turn can send a view
+        change message
+        """
+        self.lost_primary_at = time.perf_counter()
+        self._schedule_view_change()
+
     def select_primaries(self, nodeReg: Dict[str, HA]=None):
+        primaries = set()
+        primary_rank = None
+        '''
+        Build a set of names of primaries, it is needed to avoid
+        duplicates of primary nodes for different replicas.
+        '''
+        for instance_id, replica in enumerate(self.replicas):
+            if replica.primaryName is not None:
+                name = replica.primaryName.split(":", 1)[0]
+                primaries.add(name)
+                '''
+                Remember the rank of primary of master instance, it is needed
+                for calculation of primaries for backup instances.
+                '''
+                if instance_id == 0:
+                    primary_rank = self.get_rank_by_name(name, nodeReg)
+
         for instance_id, replica in enumerate(self.replicas):
             if replica.primaryName is not None:
                 logger.debug('{} already has a primary'.format(replica))
                 continue
-            new_primary_name = self.elector.next_primary_replica_name(
-                instance_id, nodeReg=nodeReg)
+            if instance_id == 0:
+                new_primary_name, new_primary_instance_name =\
+                    self.elector.next_primary_replica_name_for_master(nodeReg=nodeReg)
+                primary_rank = self.get_rank_by_name(
+                    new_primary_name, nodeReg)
+            else:
+                assert primary_rank is not None
+                new_primary_name, new_primary_instance_name =\
+                    self.elector.next_primary_replica_name_for_backup(
+                        instance_id, primary_rank, primaries, nodeReg=nodeReg)
+            primaries.add(new_primary_name)
             logger.display("{}{} selected primary {} for instance {} (view {})"
                            .format(PRIMARY_SELECTION_PREFIX, replica,
-                                   new_primary_name, instance_id, self.viewNo),
+                                   new_primary_instance_name, instance_id, self.viewNo),
                            extra={"cli": "ANNOUNCE",
                                   "tags": ["node-election"]})
             if instance_id == 0:
@@ -2362,7 +2391,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
                 # participating.
                 self.start_participating()
 
-            replica.primaryChanged(new_primary_name)
+            replica.primaryChanged(new_primary_instance_name)
             self.primary_selected(instance_id)
 
             logger.display("{}{} declares view change {} as completed for "
@@ -2373,7 +2402,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
                                    replica,
                                    self.viewNo,
                                    instance_id,
-                                   new_primary_name,
+                                   new_primary_instance_name,
                                    self.ledger_summary),
                            extra={"cli": "ANNOUNCE",
                                   "tags": ["node-election"]})
@@ -2416,7 +2445,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
         :return: None; raises an exception if the signature is not valid
         """
         if isinstance(msg, self.authnWhitelist):
-            return  # whitelisted message types rely on RAET for authn
+            return
         if isinstance(msg, Propagate):
             typ = 'propagate'
             req = msg.request
@@ -2528,7 +2557,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
 
     def commitAndSendReplies(self, reqHandler, ppTime, reqs: List[Request],
                              stateRoot, txnRoot) -> List:
-        committedTxns = reqHandler.commit(len(reqs), stateRoot, txnRoot)
+        committedTxns = reqHandler.commit(len(reqs), stateRoot, txnRoot, ppTime)
         self.updateSeqNoMap(committedTxns)
         self.sendRepliesToClients(
             map(self.update_txn_with_extra_data, committedTxns),

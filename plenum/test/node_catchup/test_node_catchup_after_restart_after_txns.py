@@ -29,7 +29,7 @@ txnCount = 5
 
 # TODO: This test passes but it is observed that PREPAREs are not received at
 # newly added node. If the stop and start steps are omitted then PREPAREs are
-# received. Conclusion is that due to node restart, RAET is losing messages
+# received. Conclusion is that due to node restart, ZMQ is losing messages
 # but its weird since prepares and commits are received which are sent before
 # and after prepares, respectively. Here is the pivotal link
 # https://www.pivotaltracker.com/story/show/127897273
@@ -73,10 +73,13 @@ def test_node_catchup_after_restart_with_txns(
     looper.add(newNode)
     txnPoolNodeSet[-1] = newNode
 
+    # Make sure ledger is not synced initially
+    check_ledger_state(newNode, DOMAIN_LEDGER_ID, LedgerState.not_synced)
+
     # Delay catchup reply processing so LedgerState does not change
-    # TODO fix delay, sometimes it's not enough and loweer 'check_ledger_state'
+    # TODO fix delay, sometimes it's not enough and lower 'check_ledger_state'
     # fails because newNode's domain ledger state is 'synced'
-    delay_catchup_reply = 5
+    delay_catchup_reply = 10
     newNode.nodeIbStasher.delay(cr_delay(delay_catchup_reply))
     looper.run(checkNodesConnected(txnPoolNodeSet))
 
@@ -115,7 +118,7 @@ def test_node_catchup_after_restart_with_txns(
 
     # Not accurate timeout but a conservative one
     timeout = waits.expectedPoolGetReadyTimeout(len(txnPoolNodeSet)) + \
-        2 * delay_catchup_reply
+              2 * delay_catchup_reply
     waitNodeDataEquality(looper, newNode, *txnPoolNodeSet[:-1],
                          customTimeout=timeout)
     assert new_node_ledger.num_txns_caught_up == more_requests

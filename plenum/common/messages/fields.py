@@ -102,6 +102,13 @@ class BooleanField(FieldBase):
         return
 
 
+class IntegerField(FieldBase):
+    _base_types = (int,)
+
+    def _specific_validation(self, val):
+        return
+
+
 class NonEmptyStringField(FieldBase):
     _base_types = (str,)
 
@@ -244,7 +251,7 @@ class NetworkPortField(FieldBase):
     _base_types = (int,)
 
     def _specific_validation(self, val):
-        if val < 0 or val > 65535:
+        if val <= 0 or val > 65535:
             return 'network port out of the range 0-65535'
 
 

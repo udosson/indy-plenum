@@ -44,6 +44,7 @@ def testReqExecWhenReturnedByMaster(tdir_for_func, tconf_for_func):
                             assert result
                         else:
                             assert result is False
+
             timeout = waits.expectedOrderingTime(
                 nodeSet.nodes['Alpha'].instances.count)
             looper.run(eventually(chk, timeout=timeout))
@@ -133,51 +134,9 @@ async def checkIfPropagateRecvdFromNode(recvrNode: TestNode,
     assert senderNode.name in recvrNode.requests[key].propagates
 
 
-# noinspection PyIncorrectDocstring
-@pytest.mark.skip(reason="INDY-76. ZStack does not have any mechanism to have "
-                         "stats either remove this once raet is removed "
-                         "or implement a `stats` feature in ZStack")
-def testMultipleRequests(tdir_for_func):
-    """
-    Send multiple requests to the node
-    """
-    with TestNodeSet(count=7, tmpdir=tdir_for_func) as nodeSet:
-        with Looper(nodeSet) as looper:
-            # for n in nodeSet:
-            #     n.startKeySharing()
-
-            # TODO: ZStack does not have any mechanism to have stats,
-            # either remove this once raet is removed or implement a `stats`
-            # feature in ZStack
-            if not config.UseZStack:
-                ss0 = snapshotStats(*nodeSet)
-            client, wal = setupNodesAndClient(looper,
-                                              nodeSet,
-                                              tmpdir=tdir_for_func)
-            if not config.UseZStack:
-                ss1 = snapshotStats(*nodeSet)
-
-            def x():
-                requests = [sendRandomRequest(wal, client) for _ in range(10)]
-                waitForSufficientRepliesForRequests(looper, client,
-                                                    requests=requests)
-
-                ss2 = snapshotStats(*nodeSet)
-                diff = statsDiff(ss2, ss1)
-
-                if not config.UseZStack:
-                    ss2 = snapshotStats(*nodeSet)
-                    diff = statsDiff(ss2, ss1)
-
-                    pprint(ss2)
-                    print("----------------------------------------------")
-                    pprint(diff)
-
-            profile_this(x)
-
-
-def testClientSendingSameRequestAgainBeforeFirstIsProcessed(looper, nodeSet,
-                                                            up, wallet1,
+def testClientSendingSameRequestAgainBeforeFirstIsProcessed(looper,
+                                                            txnPoolNodeSet,
+                                                            wallet1,
                                                             client1):
     size = len(client1.inBox)
     req = sendRandomRequest(wallet1, client1)

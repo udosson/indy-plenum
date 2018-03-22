@@ -5,7 +5,8 @@ from collections import OrderedDict
 
 import logging
 
-from plenum.common.constants import ClientBootStrategy, HS_FILE, KeyValueStorageType
+from plenum.common.constants import ClientBootStrategy, HS_FILE, HS_LEVELDB, \
+    HS_ROCKSDB, HS_MEMORY, KeyValueStorageType
 from plenum.common.types import PLUGIN_TYPE_STATS_CONSUMER
 
 # Each entry in registry is (stack name, ((host, port), verkey, pubkey))
@@ -59,7 +60,7 @@ seqNoDbName = 'seq_no_db'
 clientBootStrategy = ClientBootStrategy.PoolTxn
 
 hashStore = {
-    "type": HS_FILE
+    "type": HS_LEVELDB
 }
 
 primaryStorage = None
@@ -123,12 +124,6 @@ STATS_SERVER_MESSAGE_BUFFER_MAX_SIZE = 1000
 DUMP_VALIDATOR_INFO_INIT_SEC = 3
 DUMP_VALIDATOR_INFO_PERIOD_SEC = 60
 
-RAETLogLevel = "terse"
-RAETLogLevelCli = "mute"
-RAETLogFilePath = os.path.expanduser('~/.plenum/raet.log')
-RAETLogFilePathCli = None
-RAETMessageTimeout = 60
-
 # Controls sending of view change messages, a node will only send view change
 # messages if it did not send any sent instance change messages in last
 # `ViewChangeWindowSize` seconds
@@ -176,9 +171,6 @@ ExpectedConnectTime = 3.3 if sys.platform == 'win32' else 2
 EnsureLedgerDurability = False
 
 log_override_tags = dict(cli={}, demo={})
-
-# TODO needs to be refactored to use a transport protocol abstraction
-UseZStack = True
 
 
 # Number of messages zstack accepts at once
