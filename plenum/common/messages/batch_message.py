@@ -1,6 +1,6 @@
 from typing import List
 
-from plenum.common.messages.constants.base_message_constants import BATCH, BATCH_MSGS
+from plenum.common.messages.constants.message_constants import BATCH, BATCH_MSGS
 from plenum.common.messages.fields import IterableField
 from plenum.common.messages.message import Message
 from plenum.common.messages.message_base import MessageBase, MessageField

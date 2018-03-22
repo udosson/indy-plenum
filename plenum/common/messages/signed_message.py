@@ -1,9 +1,8 @@
 from typing import List, Generic, TypeVar
 
-from plenum.common.messages.constants.base_message_constants import SIGNED_MSG_SER, MSG_SIGNATURE_TYPE, \
-    SIGNATURE_ED25519, SIGNATURE_ED25519_MULTI, MSG_SIGNATURE_VALUES, MSG_SIGNATURE_VALUES_FROM, SERIALIZATION_MSG_PACK, \
-    MSG_SIGNATURE_THRESHOLD, SIGNED_MSG_SIGNATURE, SIGNED_MSG_DATA, SIGNED_MSG_DATA_SERIALIZED, \
-    MSG_SIGNATURE_VALUES_VALUE
+from plenum.common.messages.constants.message_constants import MSG_SIGNATURE_VALUES_FROM, MSG_SIGNATURE_VALUES_VALUE, \
+    MSG_SIGNATURE_TYPE, SIGNATURE_ED25519, MSG_SIGNATURE_VALUES, SIGNATURE_ED25519_MULTI, MSG_SIGNATURE_THRESHOLD, \
+    SIGNED_MSG_SER, SIGNED_MSG_DATA_SERIALIZED, SIGNED_MSG_SIGNATURE, SIGNED_MSG_DATA, SERIALIZATION_MSG_PACK
 from plenum.common.messages.fields import NonEmptyStringField, NonNegativeNumberField, EnumField, IterableField, \
     LimitedLengthStringField, SerializedValueField
 from plenum.common.messages.message import Message
@@ -44,7 +43,7 @@ class SignedMessage(MessageBase, Generic[M]):
     typename = None
     version = 0
 
-    msgCls = Message
+    msg_cls = Message
 
     def __init__(self, serialization: str = None, msg_serialized: bytes = None, msg: M = None,
                  signature: Signature = None):
@@ -53,7 +52,7 @@ class SignedMessage(MessageBase, Generic[M]):
             ("serialization", SIGNED_MSG_SER, EnumField(expected_values=[SERIALIZATION_MSG_PACK], optional=True)),
             ("msg_serialized", SIGNED_MSG_DATA_SERIALIZED, SerializedValueField()),
             ("signature", SIGNED_MSG_SIGNATURE, MessageField(cls=Signature)),
-            ("msg", SIGNED_MSG_DATA, MessageField(cls=self.msgCls, optional=True)),
+            ("msg", SIGNED_MSG_DATA, MessageField(cls=self.msg_cls, optional=True)),
         )
 
         self.serialization = serialization

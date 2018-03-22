@@ -2,7 +2,7 @@ import random
 from typing import Iterable, List
 
 from plenum.common.constants import MESSAGE_REQUEST, MESSAGE_RESPONSE
-from plenum.common.messages.constants.base_message_constants import MSG_TYPE
+from plenum.common.messages.constants.message_constants import MSG_TYPE
 from plenum.common.messages.node_messages import Propagate, PrePrepare, Prepare, Commit, InstanceChange, LedgerStatus, \
     ConsistencyProof, CatchupReq, CatchupRep, ViewChangeDone, \
     MessageReq, MessageRep

@@ -23,7 +23,7 @@ from plenum.client.client import Client
 from plenum.client.wallet import Wallet
 from plenum.common.constants import DOMAIN_LEDGER_ID, REPLY, REQACK, REQNACK, REJECT, \
     CURRENT_PROTOCOL_VERSION
-from plenum.common.messages.constants.base_message_constants import MSG_TYPE
+from plenum.common.messages.constants.message_constants import MSG_TYPE
 from plenum.common.exceptions import RequestNackedException, RequestRejectedException, CommonSdkIOException, \
     PoolLedgerTimeoutException
 from plenum.common.messages.node_messages import Reply, PrePrepare, Prepare, Commit

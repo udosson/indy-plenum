@@ -36,7 +36,7 @@ from plenum.common.keygen_utils import areKeysSetup
 from plenum.common.ledger import Ledger
 from plenum.common.ledger_manager import LedgerManager
 from plenum.common.message_processor import MessageProcessor
-from plenum.common.messages.constants.base_message_constants import MSG_TYPE
+from plenum.common.messages.constants.message_constants import MSG_TYPE
 from plenum.common.messages.message_factory import node_message_factory
 from plenum.common.messages.node_messages import RequestAck, RequestNack, Reject, PoolLedgerTxns, Ordered, \
     Propagate, PrePrepare, Prepare, Commit, Checkpoint, ThreePCState, Reply, InstanceChange, LedgerStatus, \

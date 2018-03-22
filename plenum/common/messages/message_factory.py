@@ -2,8 +2,9 @@ import sys
 from importlib import import_module
 
 from plenum.common.exceptions import MissingMsgType
-from plenum.common.messages.constants.base_message_constants import MSG_TYPE, MSG_VERSION
+from plenum.common.messages.constants.message_constants import MSG_TYPE, MSG_VERSION
 from plenum.common.messages.message import Message
+from plenum.common.messages.signed_message import SignedMessage
 
 
 class MessageFactory:
@@ -44,8 +45,10 @@ class MessageFactory:
             return "must have a non empty 'typename'"
         if getattr(obj, "version", None) is None:
             return "must have a non empty 'version'"
+        if getattr(obj, "need_signature", None) is True:
+            return "use a SignedMessage wrapper instead"
         # has to be the last because of: 'str' week ref error
-        if not issubclass(obj, Message):
+        if not issubclass(obj, Message) and not issubclass(obj, SignedMessage):
             return "must be a subclass of 'Message'"
 
     def get_instance(self, **message_raw) -> Message:

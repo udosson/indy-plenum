@@ -2,7 +2,7 @@ from _sha256 import sha256
 from functools import partial
 
 from plenum.common.keygen_utils import initRemoteKeys
-from plenum.common.messages.constants.base_message_constants import MSG_TYPE
+from plenum.common.messages.constants.message_constants import MSG_TYPE
 from plenum.common.stacks import nodeStackClass
 from stp_core.network.network_interface import NetworkInterface
 from stp_core.network.port_dispenser import genHa

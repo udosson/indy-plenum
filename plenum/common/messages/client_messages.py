@@ -8,11 +8,44 @@ from plenum.common.messages.fields import NetworkIpAddressField, \
     RoleField, TxnSeqNoField, IdentifierField, \
     NonNegativeNumberField, SignatureField, MapField, LimitedLengthStringField, \
     ProtocolVersionField, LedgerIdField, Base58Field, FieldValidator
+from plenum.common.messages.message import MessageData
 from plenum.common.messages.message_base import MessageValidator
+from plenum.common.messages.request import Request
+from plenum.common.messages.signed_message import SignedMessage
 from plenum.common.types import OPERATION, f
 from plenum.config import ALIAS_FIELD_LIMIT, DIGEST_FIELD_LIMIT, \
     SIGNATURE_FIELD_LIMIT, BLS_KEY_LIMIT
 
+# NYM
+
+class NymRequestData(MessageData):
+    schema = (
+        ('alias', 'alias', LimitedLengthStringField(max_length=ALIAS_FIELD_LIMIT, optional=True)),
+        ('verkey', 'verkey', VerkeyField(optional=True, nullable=True)),
+        ('did', 'did', DestNymField()),
+        ('role', 'role', RoleField(optional=True)),
+        # TODO: validate role using ChooseField,
+        # do roles list expandable form outer context
+    )
+
+    def __init__(self, alias: str = None, verkey: str = None, did: str = None,
+                 role: str = None) -> None:
+        self.alias = alias
+        self.verkey = verkey
+        self.did = did
+        self.role = role
+
+
+class NymRequest(Request[NymRequestData]):
+    typename = "NYM"
+    version = 0
+    data_cls = NymRequestData
+    need_signature = True
+
+class SignedNymRequest(SignedMessage[NymRequest]):
+    typename = "NYM"
+    version = 0
+    msg_cls = NymRequest
 
 class ClientNodeOperationData(MessageValidator):
     schema = (

@@ -11,7 +11,8 @@ from plenum.common.messages.fields import NonNegativeNumberField, IterableField,
     LimitedLengthStringField, BlsMultiSignatureField
 from plenum.common.messages.message import Message, MessageData, MessageMetadata, D
 from plenum.common.messages.message_base import \
-    MessageBase
+    MessageBase, MessageField
+from plenum.common.request import Request
 from plenum.common.types import f
 from plenum.config import NAME_FIELD_LIMIT, DIGEST_FIELD_LIMIT, SENDER_CLIENT_FIELD_LIMIT, HASH_FIELD_LIMIT, \
     BLS_SIG_LIMIT
@@ -21,24 +22,6 @@ from plenum.config import NAME_FIELD_LIMIT, DIGEST_FIELD_LIMIT, SENDER_CLIENT_FI
 
 class NodeMessage(Message[D, MessageMetadata]):
     pass
-
-
-# NOMINATION
-
-class NominationData(MessageData):
-    schema = (
-        ("name", f.NAME.nm, LimitedLengthStringField(max_length=NAME_FIELD_LIMIT)),
-        ("instId", f.INST_ID.nm, NonNegativeNumberField()),
-        ("viewNo", f.VIEW_NO.nm, NonNegativeNumberField()),
-        ("ordSeqNo", f.ORD_SEQ_NO.nm, NonNegativeNumberField()),
-    )
-
-    def __init__(self, name: str = None, instId: int = None, viewNo: int = None,
-                 ordSeqNo: int = None) -> None:
-        self.name = name
-        self.instId = instId
-        self.viewNo = viewNo
-        self.ordSeqNo = ordSeqNo
 
 
 # TODO implement actual rules
@@ -102,11 +85,11 @@ class OrderedData(MessageData):
     )
 
     def __init__(self, instId: int = None, viewNo: int = None,
-                 reqIds=None, ppSeqNo: int=None, ppTime: int=None, ledgerId: int=None,
+                 reqIdr=None, ppSeqNo: int=None, ppTime: int=None, ledgerId: int=None,
                  stateRootHash: str = None, txnRootHash: str = None):
         self.instId = instId
         self.viewNo = viewNo
-        self.reqIds = reqIds
+        self.reqIdr = reqIdr
         self.ppSeqNo = ppSeqNo
         self.ppTime = ppTime
         self.ledgerId = ledgerId
@@ -115,18 +98,29 @@ class OrderedData(MessageData):
 
 
 class Ordered(NodeMessage[OrderedData]):
-    typename = ORDERED
+    typename = "ORDERED"
     version = 0
-    dataCls = OrderedData
+    data_cls = OrderedData
 
+# PROPAGATE
 
-class Propagate(MessageBase):
-    typename = PROPAGATE
+class PropagateData(MessageBase):
     schema = (
-        (f.REQUEST.nm, ClientMessageValidator(operation_schema_is_strict=True)),
-        (f.SENDER_CLIENT.nm, LimitedLengthStringField(max_length=SENDER_CLIENT_FIELD_LIMIT, nullable=True)),
+        ('request', 'request', AnyMapField()),
+        ('senderClient', 'senderClient', LimitedLengthStringField(max_length=SENDER_CLIENT_FIELD_LIMIT, nullable=True)),
     )
 
+    def __init__(self, request: Message = None, senderClient: str = None) -> None:
+        self.request = request
+        self.senderClient = senderClient
+
+
+class Propagate(NodeMessage[PropagateData]):
+    typename = "PROPAGATE"
+    version = 0
+    data_cls = PropagateData
+
+# PRE-PREPARE
 
 class PrePrepare(MessageBase):
     typename = PREPREPARE

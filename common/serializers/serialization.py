@@ -15,4 +15,5 @@ multi_signature_value_serializer = MsgPackSerializer()
 signing_serialization = MsgPackSerializer()
 
 transport_serialization = MsgPackSerializer()
+req_digest_serialization = MsgPackSerializer()
 

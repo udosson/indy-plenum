@@ -1,8 +1,5 @@
 import pytest
 
-from plenum.common.messages.constants.base_message_constants import MSG_FROM, MSG_PROTOCOL_VERSION, \
-    SERIALIZATION_MSG_PACK, SIGNED_MSG_DATA, SIGNED_MSG_SIGNATURE, SIGNED_MSG_DATA_SERIALIZED, SIGNED_MSG_SER, \
-    MSG_VERSION, MSG_TYPE, MSG_METADATA, MSG_DATA
 from plenum.common.messages.fields import NonEmptyStringField, LimitedLengthStringField, NonNegativeNumberField
 from plenum.common.messages.message import MessageMetadata, MessageData, Message
 from plenum.common.messages.signed_message import SignedMessage, Signature, SignatureValue
@@ -35,14 +32,14 @@ class TestMessageMetadata(MessageMetadata):
 class TestMessage(Message[TestMessageData, TestMessageMetadata]):
     typename = "TEST_MESSAGE"
     version = 1
-    dataCls = TestMessageData
-    metadataCls = TestMessageMetadata
+    data_cls = TestMessageData
+    metadata_cls = TestMessageMetadata
 
 
 class TestSignedMessage(SignedMessage[TestMessage]):
     typename = "SIGNED_TEST_MESSAGE"
     version = 2
-    msgCls = TestMessage
+    msg_cls = TestMessage
 
 
 @pytest.fixture(params=['from_dict', 'in_constructor'])
@@ -51,13 +48,13 @@ def msg_inited(request):
         msg = TestMessage()
         msg.init_from_dict(
             {
-                MSG_FROM: "client1",
-                MSG_PROTOCOL_VERSION: 2,
-                MSG_DATA: {
+                "from": "client1",
+                "protocolVersion": 2,
+                "data": {
                     "aaa": 0,
                     "bbb": "1",
                 },
-                MSG_METADATA: {
+                "metadata": {
                     "f111": 1,
                     "f222": "2"
                 }
@@ -79,11 +76,11 @@ def signed_msg_inited(request):
         msg = TestSignedMessage()
         msg.init_from_dict(
             {
-                MSG_TYPE: "SIGNED_TEST_MESSAGE",
-                MSG_VERSION: 2,
-                SIGNED_MSG_SER: SERIALIZATION_MSG_PACK,
-                SIGNED_MSG_DATA_SERIALIZED: b"55555",
-                SIGNED_MSG_SIGNATURE: {
+                "type": "SIGNED_TEST_MESSAGE",
+                "version": 2,
+                "serialization": "MsgPack",
+                "msgSerialized": b"55555",
+                "signature": {
                     "type": "ed25519",
                     "values": [
                         {
@@ -92,7 +89,7 @@ def signed_msg_inited(request):
                         }
                     ]
                 },
-                SIGNED_MSG_DATA: {
+                "msg": {
                     "from": "client1",
                     "protocolVersion": 2,
                     "data": {
@@ -116,7 +113,7 @@ def signed_msg_inited(request):
         signature = Signature(type="ed25519",
                               values=[SignatureValue(
                                   frm="client1", value="signature_value")])
-        msg = TestSignedMessage(serialization=SERIALIZATION_MSG_PACK,
+        msg = TestSignedMessage(serialization="MsgPack",
                                 msg_serialized=b"55555",
                                 signature=signature,
                                 msg=msg)
@@ -153,7 +150,7 @@ def test_init_signed_msg(signed_msg_inited):
 
     assert signed_msg.typename == "SIGNED_TEST_MESSAGE"
     assert signed_msg.version == 2
-    assert signed_msg.serialization == SERIALIZATION_MSG_PACK
+    assert signed_msg.serialization == "MsgPack"
     assert signed_msg.msg_serialized == b"55555"
 
     signature = signed_msg.signature

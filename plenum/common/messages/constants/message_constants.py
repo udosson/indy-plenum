@@ -24,3 +24,6 @@ SERIALIZATION_MSG_PACK = "MsgPack"
 
 BATCH = "BATCH"
 BATCH_MSGS = "messages"
+
+REQUEST_FRM = "from"
+REQUEST_ID = "reqId"
