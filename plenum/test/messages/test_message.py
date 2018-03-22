@@ -1,9 +1,11 @@
 import pytest
 
-from plenum.common.constants import SERIALIZATION_MSG_PACK
+from plenum.common.messages.constants.base_message_constants import MSG_FROM, MSG_PROTOCOL_VERSION, \
+    SERIALIZATION_MSG_PACK, SIGNED_MSG_DATA, SIGNED_MSG_SIGNATURE, SIGNED_MSG_DATA_SERIALIZED, SIGNED_MSG_SER, \
+    MSG_VERSION, MSG_TYPE, MSG_METADATA, MSG_DATA
 from plenum.common.messages.fields import NonEmptyStringField, LimitedLengthStringField, NonNegativeNumberField
-from plenum.common.messages.message import MessageMetadata, MessageData, Message, Signature, \
-    SignatureValue, SignedMessage
+from plenum.common.messages.message import MessageMetadata, MessageData, Message
+from plenum.common.messages.signed_message import SignedMessage, Signature, SignatureValue
 
 
 class TestMessageData(MessageData):
@@ -49,13 +51,13 @@ def msg_inited(request):
         msg = TestMessage()
         msg.init_from_dict(
             {
-                "from": "client1",
-                "protocolVersion": 2,
-                "data": {
+                MSG_FROM: "client1",
+                MSG_PROTOCOL_VERSION: 2,
+                MSG_DATA: {
                     "aaa": 0,
                     "bbb": "1",
                 },
-                "metadata": {
+                MSG_METADATA: {
                     "f111": 1,
                     "f222": "2"
                 }
@@ -77,11 +79,11 @@ def signed_msg_inited(request):
         msg = TestSignedMessage()
         msg.init_from_dict(
             {
-                "typename": "SIGNED_TEST_MESSAGE",
-                "version": 2,
-                "serialization": SERIALIZATION_MSG_PACK,
-                "msgSerialized": b"55555",
-                "signature": {
+                MSG_TYPE: "SIGNED_TEST_MESSAGE",
+                MSG_VERSION: 2,
+                SIGNED_MSG_SER: SERIALIZATION_MSG_PACK,
+                SIGNED_MSG_DATA_SERIALIZED: b"55555",
+                SIGNED_MSG_SIGNATURE: {
                     "type": "ed25519",
                     "values": [
                         {
@@ -90,7 +92,7 @@ def signed_msg_inited(request):
                         }
                     ]
                 },
-                "msg": {
+                SIGNED_MSG_DATA: {
                     "from": "client1",
                     "protocolVersion": 2,
                     "data": {

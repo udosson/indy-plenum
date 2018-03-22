@@ -45,6 +45,20 @@ class Nomination(NodeMessage[NominationData]):
     version = 0
     dataCls = NominationData
 
+# BATCH
+
+class BatchData(MessageData):
+    typename = BATCH
+
+    schema = (
+        (f.MSGS.nm, IterableField(SerializedValueField())),
+        (f.SIG.nm, SignatureField(max_length=SIGNATURE_FIELD_LIMIT)),
+    )
+
+    def __init__(self, msgs: None, sig):
+        super().__init__()
+
+
 class Batch(MessageBase):
     typename = BATCH
 

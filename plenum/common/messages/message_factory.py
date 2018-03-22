@@ -1,8 +1,8 @@
 import sys
 from importlib import import_module
 
-from plenum.common.constants import MSG_TYPE, MSG_VERSION
 from plenum.common.exceptions import MissingMsgType
+from plenum.common.messages.constants.base_message_constants import MSG_TYPE, MSG_VERSION
 from plenum.common.messages.message import Message
 
 
@@ -11,7 +11,7 @@ class MessageFactory:
         for class_module_name in class_module_names:
             classes_module = self.__load_module_by_name(class_module_name)
             self.__classes = self.__get_message_classes(classes_module)
-        #assert len(self.__classes) > 0, "at least one message class loaded"
+        assert len(self.__classes) > 0, "at least one message class loaded"
 
     @classmethod
     def __load_module_by_name(cls, module_name):
@@ -42,8 +42,8 @@ class MessageFactory:
         print(obj)
         if not getattr(obj, "typename", None):
             return "must have a non empty 'typename'"
-        # if not getattr(obj, "version", None):
-        #     return "must have a non empty 'version'"
+        if getattr(obj, "version", None) is None:
+            return "must have a non empty 'version'"
         # has to be the last because of: 'str' week ref error
         if not issubclass(obj, Message):
             return "must be a subclass of 'Message'"

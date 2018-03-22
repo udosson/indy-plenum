@@ -1,3 +1,4 @@
+from plenum.common.messages.constants.base_message_constants import MSG_FROM, MSG_PROTOCOL_VERSION, MSG_DATA
 from plenum.common.messages.node_messages import Nomination, NominationData
 
 
@@ -21,9 +22,9 @@ def test_nomination_msg_from_dict():
     msg = Nomination()
     msg.init_from_dict(
         {
-            "from": "Node1",
-            "protocolVersion": 2,
-            "data": {
+            MSG_FROM: "Node1",
+            MSG_PROTOCOL_VERSION: 2,
+            MSG_DATA: {
                 "name": "name1",
                 "instId": 1,
                 "viewNo": 2,

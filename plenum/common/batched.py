@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Any, Iterable, Dict
 
-from plenum.common.constants import BATCH, MSG_TYPE
+from plenum.common.constants import BATCH
 from plenum.common.prepare_batch import split_messages_on_batches
 from stp_core.common.constants import CONNECTION_PREFIX
 from stp_core.crypto.signer import Signer

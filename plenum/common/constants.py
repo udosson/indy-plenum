@@ -151,30 +151,6 @@ class LedgerState(IntEnum):
     # complete for the ledger
 
 
-MSG_TYPE = "type"
-MSG_VERSION = "version"
-MSG_FROM = "from"
-MSG_SER = "serialization"
-MSG_DATA_SERIALIZED = "msgSerialized"
-MSG_DATA = "msg"
-MSG_SIGNATURE = "signature"
-
-MSG_PAYLOAD_PROTOCOL_VERSION = "protocolVersion"
-MSG_PAYLOAD_DATA = "data"
-MSG_PAYLOAD_METADATA = "metadata"
-MSG_PAYLOAD_PLUGIN_DATA = "pluginData"
-
-MSG_SIGNATURE_TYPE = "type"
-MSG_SIGNATURE_VALUES = "values"
-MSG_SIGNATURE_THRESHOLD = "threshold"
-MSG_SIGNATURE_VALUES_FROM = "from"
-MSG_SIGNATURE_VALUES_VALUE = "value"
-
-SIGNATURE_ED25519 = "ed25519"
-SIGNATURE_ED25519_MULTI = "ed25519multi"
-
-SERIALIZATION_MSG_PACK = "MsgPack"
-
 PROTOCOL_VERSION = "protocolVersion"
 PLUGIN_FIELDS = "pluginData"
 

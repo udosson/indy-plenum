@@ -2,6 +2,7 @@ from _sha256 import sha256
 from functools import partial
 
 from plenum.common.keygen_utils import initRemoteKeys
+from plenum.common.messages.constants.base_message_constants import MSG_TYPE
 from plenum.common.stacks import nodeStackClass
 from stp_core.network.network_interface import NetworkInterface
 from stp_core.network.port_dispenser import genHa
@@ -16,7 +17,6 @@ from plenum.common.types import f
 from plenum.common.util import bootstrapClientKeys
 from plenum.test.test_stack import StackedTester, getTestableStack
 from plenum.test.testable import spyable
-from plenum.common.constants import MSG_TYPE
 
 
 logger = getlogger()

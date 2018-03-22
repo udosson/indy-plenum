@@ -1,6 +1,7 @@
 import random
 from typing import Iterable, List
 
+from plenum.common.messages.constants.base_message_constants import MSG_TYPE
 from plenum.common.request import Request
 
 from plenum.common.messages.node_messages import ViewChangeDone, Nomination, Batch, Reelection, \
@@ -8,7 +9,7 @@ from plenum.common.messages.node_messages import ViewChangeDone, Nomination, Bat
     Propagate, PrePrepare, Prepare, Commit, Checkpoint, ThreePCState, CheckpointState, \
     Reply, InstanceChange, LedgerStatus, ConsistencyProof, CatchupReq, CatchupRep, ViewChangeDone, \
     CurrentState, MessageReq, MessageRep, ElectionType, ThreePhaseType
-from plenum.common.constants import MSG_TYPE, MESSAGE_REQUEST, MESSAGE_RESPONSE
+from plenum.common.constants import MESSAGE_REQUEST, MESSAGE_RESPONSE
 from plenum.common.types import f
 from plenum.common.util import getCallableName
 from plenum.test.test_client import TestClient

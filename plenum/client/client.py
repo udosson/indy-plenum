@@ -29,6 +29,7 @@ from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.ledger import Ledger
 from plenum.common.ledger_manager import LedgerManager
 from plenum.common.message_processor import MessageProcessor
+from plenum.common.messages.constants.base_message_constants import MSG_TYPE
 from plenum.common.messages.message_factory import node_message_factory
 from plenum.common.messages.node_messages import Reply, LedgerStatus
 from plenum.common.motor import Motor
@@ -38,7 +39,7 @@ from plenum.common.stacks import nodeStackClass
 from plenum.common.startable import Status, Mode
 from plenum.common.constants import REPLY, POOL_LEDGER_TXNS, \
     LEDGER_STATUS, CONSISTENCY_PROOF, CATCHUP_REP, REQACK, REQNACK, REJECT, \
-    MSG_TYPE, POOL_LEDGER_ID, LedgerState, MULTI_SIGNATURE, MULTI_SIGNATURE_PARTICIPANTS, \
+    POOL_LEDGER_ID, LedgerState, MULTI_SIGNATURE, MULTI_SIGNATURE_PARTICIPANTS, \
     MULTI_SIGNATURE_SIGNATURE, MULTI_SIGNATURE_VALUE
 from plenum.common.txn_util import idr_from_req_data
 from plenum.common.types import f

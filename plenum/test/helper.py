@@ -21,8 +21,9 @@ from indy.error import ErrorCode, IndyError
 from ledger.genesis_txn.genesis_txn_file_util import genesis_txn_file
 from plenum.client.client import Client
 from plenum.client.wallet import Wallet
-from plenum.common.constants import DOMAIN_LEDGER_ID, MSG_TYPE, REPLY, REQACK, REQNACK, REJECT,\
+from plenum.common.constants import DOMAIN_LEDGER_ID, REPLY, REQACK, REQNACK, REJECT,\
     CURRENT_PROTOCOL_VERSION
+from plenum.common.messages.constants.base_message_constants import MSG_TYPE
 from plenum.common.messages.node_messages import Reply, PrePrepare, Prepare, Commit
 from plenum.common.types import f
 from plenum.common.util import getNoInstances, get_utc_epoch
