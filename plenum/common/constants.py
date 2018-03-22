@@ -6,11 +6,6 @@ from plenum.common.roles import Roles
 from plenum.common.transactions import PlenumTransactions
 from plenum.common.util import UniqueSet
 
-NOMINATE = "NOMINATE"
-REELECTION = "REELECTION"
-PRIMARY = "PRIMARY"
-PRIMDEC = "PRIMARYDECIDED"
-
 BATCH = "BATCH"
 
 REQACK = "REQACK"

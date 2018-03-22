@@ -1,15 +1,12 @@
 import random
 from typing import Iterable, List
 
-from plenum.common.messages.constants.base_message_constants import MSG_TYPE
-from plenum.common.request import Request
-
-from plenum.common.messages.node_messages import ViewChangeDone, Nomination, Batch, Reelection, \
-    Primary, BlacklistMsg, RequestAck, RequestNack, Reject, PoolLedgerTxns, Ordered, \
-    Propagate, PrePrepare, Prepare, Commit, Checkpoint, ThreePCState, CheckpointState, \
-    Reply, InstanceChange, LedgerStatus, ConsistencyProof, CatchupReq, CatchupRep, ViewChangeDone, \
-    CurrentState, MessageReq, MessageRep, ElectionType, ThreePhaseType
 from plenum.common.constants import MESSAGE_REQUEST, MESSAGE_RESPONSE
+from plenum.common.messages.constants.base_message_constants import MSG_TYPE
+from plenum.common.messages.node_messages import Propagate, PrePrepare, Prepare, Commit, InstanceChange, LedgerStatus, \
+    ConsistencyProof, CatchupReq, CatchupRep, ViewChangeDone, \
+    MessageReq, MessageRep
+from plenum.common.request import Request
 from plenum.common.types import f
 from plenum.common.util import getCallableName
 from plenum.test.test_client import TestClient
@@ -46,8 +43,8 @@ def delayerMsgTuple(seconds, opType, senderFilter=None,
         if isinstance(msg, opType) and \
                 (not senderFilter or frm == senderFilter) and \
                 (instFilter is None or
-                 (f.INST_ID.nm in msg._fields and
-                  getattr(msg, f.INST_ID.nm) == instFilter)):
+                     (f.INST_ID.nm in msg._fields and
+                              getattr(msg, f.INST_ID.nm) == instFilter)):
             return seconds
 
     if hasattr(opType, 'typename'):
@@ -75,24 +72,6 @@ def delayerMethod(method, delay):
             return delay
 
     return inner
-
-
-def nom_delay(delay: float = DEFAULT_DELAY, inst_id=None, sender_filter: str = None):
-    # Delayer of NOMINATE requests
-    return delayerMsgTuple(
-        delay, Nomination, instFilter=inst_id, senderFilter=sender_filter)
-
-
-def prim_delay(delay: float = DEFAULT_DELAY, inst_id=None, sender_filter: str = None):
-    # Delayer of PRIMARY requests
-    return delayerMsgTuple(
-        delay, Primary, instFilter=inst_id, senderFilter=sender_filter)
-
-
-def rel_delay(delay: float = DEFAULT_DELAY, inst_id=None, sender_filter: str = None):
-    # Delayer of REELECTION requests
-    return delayerMsgTuple(
-        delay, Reelection, instFilter=inst_id, senderFilter=sender_filter)
 
 
 def ppgDelay(delay: float = DEFAULT_DELAY, sender_filter: str = None):
@@ -158,7 +137,7 @@ def msg_req_delay(delay: float = DEFAULT_DELAY, types_to_delay: List = None):
     def specific_msgs(msg):
         if isinstance(
                 msg[0], MessageReq) and (
-                not types_to_delay or msg[0].msg_type in types_to_delay):
+                    not types_to_delay or msg[0].msg_type in types_to_delay):
             return delay
 
     specific_msgs.__name__ = MESSAGE_REQUEST
@@ -170,7 +149,7 @@ def msg_rep_delay(delay: float = DEFAULT_DELAY, types_to_delay: List = None):
     def specific_msgs(msg):
         if isinstance(
                 msg[0], MessageRep) and (
-                not types_to_delay or msg[0].msg_type in types_to_delay):
+                    not types_to_delay or msg[0].msg_type in types_to_delay):
             return delay
 
     specific_msgs.__name__ = MESSAGE_RESPONSE
@@ -218,7 +197,7 @@ def delay_messages(typ, nodes, inst_id, delay=None,
     else:
         RuntimeError('Unknown type')
     assert delay is not None or (
-            min_delay is not None and max_delay is not None)
+        min_delay is not None and max_delay is not None)
     for node in nodes:
         if delay:
             d = delay

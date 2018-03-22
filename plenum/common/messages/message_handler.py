@@ -1,6 +1,9 @@
+from typing import List
+
 from common.serializers.serialization import transport_serialization
-from plenum.common.messages.message import Message, SignedMessage
+from plenum.common.messages.message import Message
 from plenum.common.messages.message_factory import MessageFactory
+from plenum.common.messages.signed_message import SignedMessage
 from plenum.server.req_authenticator import ReqAuthenticator
 from stp_core.common.log import getlogger
 
@@ -14,23 +17,31 @@ class MessageHandler:
 
     # PUBLIC
 
-    def process_input_msg(self, serialized_msg: bytes) -> Message:
-        # 1. deserialize to dict
+    def process_input_msg(self, serialized_msg: bytes) -> List[Message]:
         msg_as_dict = self._deserialize(serialized_msg)
-
-        # 2. dict to Message instance
         msg = self._instantiate_from_dict(msg_as_dict)
+        return self._do_process_input_msg(msg)
 
-        # 3. validate
+    def process_output_msgs(self, msgs: List[Message]) -> List[bytes]:
+        result = []
+        for msg in msgs:
+            msg.validate()
+            msg_as_dict = msg.to_dict()
+            serialized_msg = self._serialize(msg_as_dict)
+            result.append(serialized_msg)
+        return result
+
+    # PROTECTED
+
+    def _do_process_input_msg(self, msg: Message) -> List[Message]:
         msg.validate()
 
-        # 4. verify signature and deserialize payload if signed wrapper
         if isinstance(msg, SignedMessage):
-            self.process_signed_msg(msg)
+            msg = self._process_signed_msg(msg)
 
-        return msg
+        return [msg]
 
-    def process_signed_msg(self, msg: SignedMessage):
+    def _process_signed_msg(self, msg: SignedMessage) -> Message:
         # 1. verify signature
         self._verify_signature(msg)
 
@@ -46,11 +57,7 @@ class MessageHandler:
         # 5. set payload
         msg.msg = msg_payload
 
-    def process_output_msg(self, msg: Message) -> bytes:
-        msg.validate()
-        return msg.to_dict()
-
-    # PROTECTED
+        return msg
 
     @staticmethod
     def _deserialize(serialized_msg: bytes, serialization=None) -> dict:
@@ -60,7 +67,7 @@ class MessageHandler:
     @staticmethod
     def _serialize(msg: Message, serialization=None) -> dict:
         # TODO: support MsgPack only for now
-        return transport_serialization.deserialize(serialized_msg)
+        return transport_serialization.serialize(msg)
 
     def _instantiate_from_dict(self, msg_as_dict: dict) -> Message:
         msg = self.message_factory.get_instance(**msg_as_dict)

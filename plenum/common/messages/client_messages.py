@@ -7,7 +7,7 @@ from plenum.common.messages.fields import NetworkIpAddressField, \
     ChooseField, ConstantField, DestNodeField, VerkeyField, DestNymField, \
     RoleField, TxnSeqNoField, IdentifierField, \
     NonNegativeNumberField, SignatureField, MapField, LimitedLengthStringField, \
-    ProtocolVersionField, LedgerIdField, Base58Field
+    ProtocolVersionField, LedgerIdField, Base58Field, FieldValidator
 from plenum.common.messages.message_base import MessageValidator
 from plenum.common.types import OPERATION, f
 from plenum.config import ALIAS_FIELD_LIMIT, DIGEST_FIELD_LIMIT, \

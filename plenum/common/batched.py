@@ -7,7 +7,6 @@ from stp_core.common.constants import CONNECTION_PREFIX
 from stp_core.crypto.signer import Signer
 from stp_core.common.log import getlogger
 from plenum.common.types import f
-from plenum.common.messages.node_messages import Batch
 from plenum.common.message_processor import MessageProcessor
 from stp_core.validators.message_length_validator import MessageLenValidator
 from stp_core.common.config.util import getConfig

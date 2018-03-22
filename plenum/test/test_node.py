@@ -34,7 +34,6 @@ from plenum.server.instances import Instances
 from plenum.server.monitor import Monitor
 from plenum.server.node import Node
 from plenum.server.view_change.view_changer import ViewChanger
-from plenum.server.primary_elector import PrimaryElector
 from plenum.server.primary_selector import PrimarySelector
 from plenum.test.greek import genNodeNames
 from plenum.test.msgs import TestMsg
@@ -170,19 +169,6 @@ class TestNodeCore(StackedTester):
         vchCls = self.view_changer if self.view_changer is not None else \
             TestViewChanger
         return vchCls(self)
-
-    def delaySelfNomination(self, delay: Seconds):
-        if isinstance(self.primaryDecider, PrimaryElector):
-            logger.debug("{} delaying start election".format(self))
-            delayerElection = partial(delayers.delayerMethod,
-                                      TestPrimaryElector.startElection)
-            self.elector.actionQueueStasher.delay(delayerElection(delay))
-        elif isinstance(self.primaryDecider, PrimarySelector):
-            raise RuntimeError('Does not support nomination since primary is '
-                               'selected deterministically')
-        else:
-            raise RuntimeError('Unknown primary decider encountered {}'.
-                               format(self.primaryDecider))
 
     def delayCheckPerformance(self, delay: Seconds):
         logger.debug("{} delaying check performance".format(self))
@@ -386,26 +372,6 @@ class TestNode(TestNodeCore, Node):
                 if proof:
                     txn[STATE_PROOF] = proof
         super().sendRepliesToClients(committedTxns, ppTime)
-
-
-elector_spyables = [
-    PrimaryElector.discard,
-    PrimaryElector.processPrimary,
-    PrimaryElector.sendPrimary
-]
-
-
-@spyable(methods=elector_spyables)
-class TestPrimaryElector(PrimaryElector):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.actionQueueStasher = Stasher(self.actionQueue,
-                                          "actionQueueStasher~elector~" +
-                                          self.name)
-
-    def _serviceActions(self):
-        self.actionQueueStasher.process()
-        return super()._serviceActions()
 
 
 selector_spyables = [PrimarySelector.decidePrimaries]

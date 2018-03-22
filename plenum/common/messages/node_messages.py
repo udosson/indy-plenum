@@ -1,12 +1,12 @@
 from typing import TypeVar, NamedTuple
 
-from plenum.common.constants import NOMINATE, BATCH, REELECTION, PRIMARY, BLACKLIST, REQACK, REQNACK, REJECT, \
+from plenum.common.constants import BATCH, BLACKLIST, REQACK, REQNACK, REJECT, \
     POOL_LEDGER_TXNS, ORDERED, PROPAGATE, PREPREPARE, PREPARE, COMMIT, CHECKPOINT, THREE_PC_STATE, CHECKPOINT_STATE, \
     REPLY, INSTANCE_CHANGE, LEDGER_STATUS, CONSISTENCY_PROOF, CATCHUP_REQ, CATCHUP_REP, VIEW_CHANGE_DONE, CURRENT_STATE, \
     MESSAGE_REQUEST, MESSAGE_RESPONSE, OBSERVED_DATA, BATCH_COMMITTED
 from plenum.common.messages.client_messages import ClientMessageValidator
 from plenum.common.messages.fields import NonNegativeNumberField, IterableField, \
-    SerializedValueField, SignatureField, TieAmongField, AnyValueField, RequestIdentifierField, TimestampField, \
+    AnyValueField, RequestIdentifierField, TimestampField, \
     LedgerIdField, MerkleRootField, Base58Field, LedgerInfoField, AnyField, ChooseField, AnyMapField, \
     LimitedLengthStringField, BlsMultiSignatureField
 from plenum.common.messages.message import Message, MessageData, MessageMetadata, D
@@ -14,17 +14,18 @@ from plenum.common.messages.message_base import \
     MessageBase
 from plenum.common.types import f
 from plenum.config import NAME_FIELD_LIMIT, DIGEST_FIELD_LIMIT, SENDER_CLIENT_FIELD_LIMIT, HASH_FIELD_LIMIT, \
-    SIGNATURE_FIELD_LIMIT, TIE_IDR_FIELD_LIMIT, BLS_SIG_LIMIT
+    BLS_SIG_LIMIT
+
 
 # BASE NODE MSG
 
 class NodeMessage(Message[D, MessageMetadata]):
     pass
 
+
 # NOMINATION
 
 class NominationData(MessageData):
-
     schema = (
         ("name", f.NAME.nm, LimitedLengthStringField(max_length=NAME_FIELD_LIMIT)),
         ("instId", f.INST_ID.nm, NonNegativeNumberField()),
@@ -38,56 +39,6 @@ class NominationData(MessageData):
         self.instId = instId
         self.viewNo = viewNo
         self.ordSeqNo = ordSeqNo
-
-
-class Nomination(NodeMessage[NominationData]):
-    typename = NOMINATE
-    version = 0
-    dataCls = NominationData
-
-# BATCH
-
-class BatchData(MessageData):
-    typename = BATCH
-
-    schema = (
-        (f.MSGS.nm, IterableField(SerializedValueField())),
-        (f.SIG.nm, SignatureField(max_length=SIGNATURE_FIELD_LIMIT)),
-    )
-
-    def __init__(self, msgs: None, sig):
-        super().__init__()
-
-
-class Batch(MessageBase):
-    typename = BATCH
-
-    schema = (
-        (f.MSGS.nm, IterableField(SerializedValueField())),
-        (f.SIG.nm, SignatureField(max_length=SIGNATURE_FIELD_LIMIT)),
-    )
-
-
-class Reelection(MessageBase):
-    typename = REELECTION
-
-    schema = (
-        (f.INST_ID.nm, NonNegativeNumberField()),
-        (f.ROUND.nm, NonNegativeNumberField()),
-        (f.TIE_AMONG.nm, IterableField(TieAmongField(max_length=TIE_IDR_FIELD_LIMIT))),
-        (f.VIEW_NO.nm, NonNegativeNumberField()),
-    )
-
-
-class Primary(MessageBase):
-    typename = PRIMARY
-
-    schema = (
-        (f.NAME.nm, LimitedLengthStringField(max_length=NAME_FIELD_LIMIT)),
-        (f.INST_ID.nm, NonNegativeNumberField()),
-        (f.VIEW_NO.nm, NonNegativeNumberField()),
-        (f.ORD_SEQ_NO.nm, NonNegativeNumberField()),
-    )
 
 
 # TODO implement actual rules
@@ -136,19 +87,37 @@ class PoolLedgerTxns(MessageBase):
     )
 
 
-class Ordered(MessageBase):
-    typename = ORDERED
+# ORDERED
+
+class OrderedData(MessageData):
     schema = (
-        (f.INST_ID.nm, NonNegativeNumberField()),
-        (f.VIEW_NO.nm, NonNegativeNumberField()),
-        (f.REQ_IDR.nm, IterableField(RequestIdentifierField())),
-        (f.PP_SEQ_NO.nm, NonNegativeNumberField()),
-        (f.PP_TIME.nm, TimestampField()),
-        (f.LEDGER_ID.nm, LedgerIdField()),
-        (f.STATE_ROOT.nm, MerkleRootField(nullable=True)),
-        (f.TXN_ROOT.nm, MerkleRootField(nullable=True)),
-        (f.PLUGIN_FIELDS.nm, AnyMapField(optional=True, nullable=True))
+        ('instId', 'instId', NonNegativeNumberField()),
+        ('viewNo', 'viewNo', NonNegativeNumberField()),
+        ('reqIdr', 'reqIdr', IterableField(RequestIdentifierField())),
+        ('ppSeqNo', 'ppSeqNo', NonNegativeNumberField()),
+        ('ppTime', 'ppTime', TimestampField()),
+        ('ledgerId', 'ledgerId', LedgerIdField()),
+        ('stateRootHash', 'stateRootHash', MerkleRootField(nullable=True)),
+        ('txnRootHash', 'txnRootHash', MerkleRootField(nullable=True)),
     )
+
+    def __init__(self, instId: int = None, viewNo: int = None,
+                 reqIds=None, ppSeqNo: int=None, ppTime: int=None, ledgerId: int=None,
+                 stateRootHash: str = None, txnRootHash: str = None):
+        self.instId = instId
+        self.viewNo = viewNo
+        self.reqIds = reqIds
+        self.ppSeqNo = ppSeqNo
+        self.ppTime = ppTime
+        self.ledgerId = ledgerId
+        self.stateRootHash = stateRootHash
+        self.txnRootHash = txnRootHash
+
+
+class Ordered(NodeMessage[OrderedData]):
+    typename = ORDERED
+    version = 0
+    dataCls = OrderedData
 
 
 class Propagate(MessageBase):
@@ -377,9 +346,6 @@ class MessageRep(MessageBase):
 
 ThreePhaseType = (PrePrepare, Prepare, Commit)
 ThreePhaseMsg = TypeVar("3PhaseMsg", *ThreePhaseType)
-
-ElectionType = (Nomination, Primary, Reelection)
-ElectionMsg = TypeVar("ElectionMsg", *ElectionType)
 
 ThreePhaseKey = NamedTuple("ThreePhaseKey", [
     f.VIEW_NO,

@@ -38,8 +38,7 @@ from plenum.common.ledger_manager import LedgerManager
 from plenum.common.message_processor import MessageProcessor
 from plenum.common.messages.constants.base_message_constants import MSG_TYPE
 from plenum.common.messages.message_factory import node_message_factory
-from plenum.common.messages.node_messages import Nomination, Batch, Reelection, \
-    Primary, RequestAck, RequestNack, Reject, PoolLedgerTxns, Ordered, \
+from plenum.common.messages.node_messages import RequestAck, RequestNack, Reject, PoolLedgerTxns, Ordered, \
     Propagate, PrePrepare, Prepare, Commit, Checkpoint, ThreePCState, Reply, InstanceChange, LedgerStatus, \
     ConsistencyProof, CatchupReq, CatchupRep, ViewChangeDone, \
     CurrentState, MessageReq, MessageRep, ThreePhaseType, BatchCommitted, \
@@ -305,10 +304,6 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
         # ClientRequest and Propagation, which both require client
         # signature verification
         self.authnWhitelist = (
-            Nomination,
-            Primary,
-            Reelection,
-            Batch,
             ViewChangeDone,
             PrePrepare,
             Prepare,
