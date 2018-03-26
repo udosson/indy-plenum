@@ -3,7 +3,6 @@ from typing import Mapping, NamedTuple, Dict
 
 from common.serializers.serialization import signing_serialization
 from plenum.common.constants import REQKEY, FORCE, TXN_TYPE
-from plenum.common.messages.client_messages import ClientMessageValidator
 from plenum.common.types import f, OPERATION
 from plenum.common.util import getTimeBasedId
 from stp_core.types import Identifier
@@ -136,9 +135,9 @@ class ReqKey(NamedTuple(REQKEY, [f.IDENTIFIER, f.REQ_ID])):
     pass
 
 
-class SafeRequest(Request, ClientMessageValidator):
+class SafeRequest(Request):
     def __init__(self, **kwargs):
-        ClientMessageValidator.__init__(self, operation_schema_is_strict=False,
-                                        schema_is_strict=False)
+        # ClientMessageValidator.__init__(self, operation_schema_is_strict=False,
+        #                                 schema_is_strict=False)
         self.validate(kwargs)
         Request.__init__(self, **kwargs)

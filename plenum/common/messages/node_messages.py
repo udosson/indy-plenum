@@ -4,7 +4,6 @@ from plenum.common.constants import BATCH, BLACKLIST, REQACK, REQNACK, REJECT, \
     POOL_LEDGER_TXNS, ORDERED, PROPAGATE, PREPREPARE, PREPARE, COMMIT, CHECKPOINT, THREE_PC_STATE, CHECKPOINT_STATE, \
     REPLY, INSTANCE_CHANGE, LEDGER_STATUS, CONSISTENCY_PROOF, CATCHUP_REQ, CATCHUP_REP, VIEW_CHANGE_DONE, CURRENT_STATE, \
     MESSAGE_REQUEST, MESSAGE_RESPONSE, OBSERVED_DATA, BATCH_COMMITTED
-from plenum.common.messages.client_messages import ClientMessageValidator
 from plenum.common.messages.fields import NonNegativeNumberField, IterableField, \
     AnyValueField, RequestIdentifierField, TimestampField, \
     LedgerIdField, MerkleRootField, Base58Field, LedgerInfoField, AnyField, ChooseField, AnyMapField, \
@@ -185,8 +184,8 @@ class ThreePCState(MessageBase):
     typename = THREE_PC_STATE
     schema = (
         (f.INST_ID.nm, NonNegativeNumberField()),
-        (f.MSGS.nm, IterableField(ClientMessageValidator(
-            operation_schema_is_strict=True))),
+        # (f.MSGS.nm, IterableField(ClientMessageValidator(
+        #     operation_schema_is_strict=True))),
     )
 
 
@@ -354,8 +353,8 @@ class BatchCommitted(MessageBase):
     """
     typename = BATCH_COMMITTED
     schema = (
-        (f.REQUESTS.nm,
-         IterableField(ClientMessageValidator(operation_schema_is_strict=True))),
+    #     (f.REQUESTS.nm,
+    #      IterableField(ClientMessageValidator(operation_schema_is_strict=True))),
         (f.LEDGER_ID.nm, LedgerIdField()),
         (f.PP_TIME.nm, TimestampField()),
         (f.STATE_ROOT.nm, MerkleRootField()),
