@@ -123,5 +123,5 @@ def test_get_keys_with_prefix(db_with_no_comparator):
             else:
                 break
 
-        # All keys with the prefix are retrieved
+        # All and only keys with the prefix are retrieved
         assert retrieved_keys == set(keys_by_pfx[p])

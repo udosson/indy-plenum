@@ -2477,7 +2477,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
                 "{} commit failed for batch request, error {}, view no {}, "
                 "ppSeqNo {}, ledger {}, state root {}, txn root {}, "
                 "requests: {}".format(
-                    self, repr(exc), view_no, pp_seq_no, ledger_id, state_root,
+                    self, exc, view_no, pp_seq_no, ledger_id, state_root,
                     txn_root, [(req.identifier, req.reqId) for req in reqs]
                 )
             )
@@ -2536,6 +2536,7 @@ class Node(HasActionQueue, Motor, Propagator, MessageProcessor, HasFileStorage,
 
     def commitAndSendReplies(self, reqHandler, ppTime, reqs: List[Request],
                              stateRoot, txnRoot) -> List:
+        logger.debug('{} going to commit and send replies to client'.format(self))
         committedTxns = reqHandler.commit(len(reqs), stateRoot, txnRoot)
         self.updateSeqNoMap(committedTxns)
         updated_committed_txns = list(map(self.update_txn_with_extra_data, committedTxns))
