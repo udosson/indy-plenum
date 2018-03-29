@@ -27,3 +27,5 @@ BATCH_MSGS = "messages"
 
 REQUEST_FRM = "from"
 REQUEST_ID = "reqId"
+
+POOL_MULTI_SIG_BLS = "BLS"

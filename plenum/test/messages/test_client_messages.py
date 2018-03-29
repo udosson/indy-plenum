@@ -66,7 +66,7 @@ def nym(request):
                                  frm="client1",
                                  reqId=202
                              ))
-        signature = Signature(type="ed25519",
+        signature = Signature(typename="ed25519",
                               values=[SignatureValue(
                                   frm="client1", value="signature_value")])
         msg = SignedNymRequest(serialization=SERIALIZATION_MSG_PACK,
@@ -134,7 +134,7 @@ def node(request):
                                   frm="client1",
                                   reqId=202
                               ))
-        signature = Signature(type="ed25519",
+        signature = Signature(typename="ed25519",
                               values=[SignatureValue(
                                   frm="client1", value="signature_value")])
         msg = SignedNodeRequest(serialization=SERIALIZATION_MSG_PACK,
@@ -150,6 +150,7 @@ def validate_signature(msg):
 
     signature = msg.signature
     assert isinstance(signature, Signature)
+    assert signature.typename == "ed25519"
     assert signature.threshold is None
     signature_value = signature.values[0]
     assert signature_value.frm == "client1"

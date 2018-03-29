@@ -364,6 +364,9 @@ class BatchCommitted(MessageBase):
     )
 
 
+# OBSERVED DATA
+
+
 class ObservedData(MessageBase):
     """
     Purpose: propagate data from Validators to Observers

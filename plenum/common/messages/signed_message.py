@@ -23,15 +23,15 @@ class SignatureValue(MessageBase):
 
 class Signature(MessageBase):
     schema = (
-        ("type", MSG_SIGNATURE_TYPE,
+        ("typename", MSG_SIGNATURE_TYPE,
          EnumField(expected_values=[SIGNATURE_ED25519, SIGNATURE_ED25519_MULTI])),
         ("values", MSG_SIGNATURE_VALUES,
          IterableField(MessageField(cls=SignatureValue))),
         ("threshold", MSG_SIGNATURE_THRESHOLD, NonNegativeNumberField(optional=True))
     )
 
-    def __init__(self, type: str = None, values: List[SignatureValue] = None, threshold: int = None):
-        self.type = type
+    def __init__(self, typename: str = None, values: List[SignatureValue] = None, threshold: int = None):
+        self.typename = typename
         self.values = values
         self.threshold = threshold
 

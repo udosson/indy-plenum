@@ -110,7 +110,7 @@ def signed_msg_inited(request):
                           frm="client1",
                           data=data,
                           metadata=metadata)
-        signature = Signature(type="ed25519",
+        signature = Signature(typename="ed25519",
                               values=[SignatureValue(
                                   frm="client1", value="signature_value")])
         msg = TestSignedMessage(serialization="MsgPack",
@@ -155,6 +155,7 @@ def test_init_signed_msg(signed_msg_inited):
 
     signature = signed_msg.signature
     assert isinstance(signature, Signature)
+    assert signature.typename == "ed25519"
     assert signature.threshold is None
     signature_value = signature.values[0]
     assert signature_value.frm == "client1"

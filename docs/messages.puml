@@ -3,49 +3,25 @@
 class Message {
 +type: str
 +version: str
-+from: str
-+serialization: str
-+msgSerialized: bytes
-+signature: str
-\n
--msg: MessagePayload
--schema: dict
--schemaData: dict
--schemaMetadata: dict
-}
-
-class MessagePayload {
-+protocolVersion
++protocolVersion: str
 +data
 +metadata
 +pluginData
 }
 
-
-abstract class Reply {
+class SignedMessage {
++type: str
++version: str
++signature: Signature
++msg: bytes
 }
 
-abstract class Request {
-}
 
-abstract class WriteRequest {
-}
-
-abstract class ReadRequest {
-}
-
-abstract class NodeMessage {
-}
-
-Message *-- MessagePayload
 
 Message <|-- Request
-Request <|-- WriteRequest
-Request <|-- ReadRequest
 
 Message <|-- Reply
-Reply <|-- WriteReply
-Reply <|-- ReadReply
+Message <|-- ReplyCommand
 
 Message <|-- NodeMessage
 
