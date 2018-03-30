@@ -2,9 +2,10 @@ from typing import List
 
 from plenum.common.messages.batch_message import Batch
 from plenum.common.messages.message import Message
+from plenum.common.messages.message_authenticator import MessageAuthenticator
+from plenum.common.messages.message_base import MessageBase
 from plenum.common.messages.message_factory import MessageFactory
 from plenum.common.messages.message_handler import MessageHandler
-from plenum.server.req_authenticator import ReqAuthenticator
 from stp_core.common.log import getlogger
 from stp_core.validators.message_length_validator import MessageLenValidator
 
@@ -14,7 +15,7 @@ logger = getlogger()
 class BatchedMessageHandler(MessageHandler):
     SPLIT_STEPS_LIMIT = 8
 
-    def __init__(self, authenticator: ReqAuthenticator, message_factory: MessageFactory):
+    def __init__(self, authenticator: MessageAuthenticator, message_factory: MessageFactory):
         super().__init__(authenticator, message_factory)
         self.msg_len_val = MessageLenValidator(self.stp_config.MSG_LEN_LIMIT)
 
@@ -26,7 +27,7 @@ class BatchedMessageHandler(MessageHandler):
 
     # PROTECTED
 
-    def _do_process_input_msg(self, msg: Message) -> List[Message]:
+    def _do_process_input_msg(self, msg: Message) -> List[MessageBase]:
         if not isinstance(msg, Batch):
             return super()._do_process_input_msg(msg)
 

@@ -1,23 +1,25 @@
 from typing import List
 
 from common.serializers.serialization import transport_serialization
+from plenum.common.exceptions import MissingSignature
 from plenum.common.messages.message import Message
+from plenum.common.messages.message_authenticator import MessageAuthenticator
+from plenum.common.messages.message_base import MessageBase
 from plenum.common.messages.message_factory import MessageFactory
 from plenum.common.messages.signed_message import SignedMessage
-from plenum.server.req_authenticator import ReqAuthenticator
 from stp_core.common.log import getlogger
 
 logger = getlogger()
 
 
 class MessageHandler:
-    def __init__(self, authenticator: ReqAuthenticator, message_factory: MessageFactory):
+    def __init__(self, authenticator: MessageAuthenticator, message_factory: MessageFactory):
         self.authenticator = authenticator
         self.message_factory = message_factory
 
     # PUBLIC
 
-    def process_input_msg(self, serialized_msg: bytes) -> List[Message]:
+    def process_input_msg(self, serialized_msg: bytes) -> List[MessageBase]:
         msg_as_dict = self._deserialize(serialized_msg)
         msg = self._instantiate_from_dict(msg_as_dict)
         return self._do_process_input_msg(msg)
@@ -33,15 +35,23 @@ class MessageHandler:
 
     # PROTECTED
 
-    def _do_process_input_msg(self, msg: Message) -> List[Message]:
+    def _do_process_input_msg(self, msg: Message) -> List[MessageBase]:
+        # 1. validate
         msg.validate()
 
-        if isinstance(msg, SignedMessage):
-            msg = self._process_signed_msg(msg)
+        # 2. check if signature is required
+        if self.authenticator.is_signature_missing(msg):
+            raise MissingSignature()
+
+        # 3. process Signed Message
+        msg = self._process_signed_msg(msg)
 
         return [msg]
 
-    def _process_signed_msg(self, msg: SignedMessage) -> Message:
+    def _process_signed_msg(self, msg: Message) -> MessageBase:
+        if not isinstance(msg, SignedMessage):
+            return msg
+
         # 1. verify signature
         self._verify_signature(msg)
 

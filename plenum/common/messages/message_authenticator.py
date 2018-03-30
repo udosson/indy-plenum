@@ -1,12 +1,10 @@
 from typing import Optional
 
-from plenum.common.constants import TXN_TYPE
 from common.error import error
 from plenum.common.exceptions import NoAuthenticatorFound, MissingSignature
 from plenum.common.messages.message import Message
 from plenum.common.messages.message_base import MessageBase
 from plenum.common.messages.signed_message import SignedMessage
-from plenum.common.types import OPERATION
 from plenum.server.client_authn import ClientAuthNr
 
 
@@ -15,13 +13,25 @@ class MessageAuthenticator:
     Maintains a list of authenticators. The first authenticator in the list
     of authenticators is the core authenticator
     """
+
     def __init__(self):
         self._authenticators = []
 
     def register_authenticator(self, authenticator: ClientAuthNr):
         self._authenticators.append(authenticator)
 
-    def authenticate(self, msg: MessageBase):
+    def is_signature_missing(self, msg: MessageBase):
+        if isinstance(msg, Message):
+            if type(msg).need_signature:
+                return True
+            return False
+
+        if not isinstance(msg, SignedMessage):
+            return True
+
+        return False
+
+    def authenticate(self, msg: SignedMessage):
         """
         Authenticates a given message data by verifying signatures from
         any registered authenticators. If the request is a query returns
@@ -30,20 +40,11 @@ class MessageAuthenticator:
         :param req_data:
         :return:
         """
-        if isinstance(msg, Message):
-            if type(msg).need_signature:
-                raise MissingSignature()
-            return set()
-
-        if not isinstance(msg, SignedMessage):
-            raise MissingSignature()
-
-        signed_msg = msg # type: SignedMessage
         identifiers = set()
         typ = msg.typename
-        msg_payload = signed_msg.msg_serialized
-        signatures = {v.frm: v.value for v in signed_msg.signature.values}
-        threshold = signed_msg.signature.threshold
+        msg_payload = msg.msg_serialized
+        signatures = {v.frm: v.value for v in msg.signature.values}
+        threshold = msg.signature.threshold
 
         for authenticator in self._authenticators:
             # TODO: we don't need this anymore if we follow SignedMessage wrapper approach

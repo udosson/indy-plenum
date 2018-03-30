@@ -1,11 +1,22 @@
 @startuml
 
-class Message {
+skinparam class {
+	BackgroundColor<<ClientMsg>> Wheat
+	BorderColor<<ClientMsg>> Tomato
+	BackgroundColor<<NodeMsg>> LightGray
+	BorderColor<<NodeMsg>> Tomato
+	BackgroundColor<<Reply>> LightBlue
+	BorderColor<<NodeMsg>> Tomato
+}
+
+
+class Message{
 +type: str
 +version: str
 +protocolVersion: str
-+data
-+metadata
+\n
++data: MessageData
++metadata: MessageMetadata
 +pluginData
 }
 
@@ -13,51 +24,102 @@ class SignedMessage {
 +type: str
 +version: str
 +signature: Signature
-+msg: bytes
++msg: bytes          # serialized
 }
 
+abstract class MessageData
+
+class MessageMetadata
+
+Message *-- MessageData
+Message *-- MessageMetadata
+SignedMessage *-- Message
+
+class RequestMetadata {
++ frm: str
++ reqId: str
+}
+RequestMetadata <|-- MessageMetadata
 
 
 Message <|-- Request
+Request *-- RequestMetadata
 
-Message <|-- Reply
-Message <|-- ReplyCommand
+class NymRequest <<ClientMsg>>
+NymRequestData <|-- MessageData
+NymRequest <|-- Request
+NymRequest *-- NymRequestData
+SignedMessage <|-- SignedNymRequest
+SignedNymRequest *-- NymRequest
+
+class NodeRequest <<ClientMsg>>
+NodeRequestData <|-- MessageData
+NodeRequest <|-- Request
+NodeRequest *-- NodeRequestData
+SignedMessage <|-- SignedNodeRequest
+SignedNodeRequest *-- NodeRequest
+
+class GetNymRequest <<ClientMsg>>
+GetNymRequestData <|-- MessageData
+GetNymRequest <|-- Request
+GetNymRequest *-- GetNymRequestData
+
 
 Message <|-- NodeMessage
 
-Message <|-- Ack
-Message <|-- Nack
-Message <|-- Reject
+class PrePrepare <<NodeMsg>>
+PrePrepareData <|-- MessageData
+NodeMessage <|-- PrePrepare
+PrePrepare *-- PrePrepareData
 
-WriteRequest <|-- Nym
-ReadRequest <|-- GetNym
+class Prepare <<NodeMsg>>
+PrepareData <|-- MessageData
+NodeMessage <|-- Prepare
+Prepare *-- PrepareData
 
-NodeMessage <|-- PrePrepareData
-NodeMessage <|-- PrepareData
-NodeMessage <|-- CommitData
+class Commit <<NodeMsg>>
+CommitData <|-- MessageData
+NodeMessage <|-- Commit
+Commit *-- CommitData
+
+class Result {
++ result
++ multiSignature
++ stateProof
++ auditProof
+}
+
+class Reply <<Reply>> {
++ results: List[Result]
+}
+ReplyData <|-- MessageData
+Message <|-- Reply
+Reply *-- ReplyData
+Reply *-- Result
+
+class ReplyCommand <<Reply>>
+CommandReplyData <|-- MessageData
+Message <|-- ReplyCommand
+ReplyCommand *-- CommandReplyData
 
 note as N1
 <b>Receiving a Message</b>
-1) Receive MSG via ZMQ in MsgPack format
-2) Deserialize Msg to dict
-3) Validation1: validate fields against `schema`
-4) Validation2: verify signature if needed
-5) Deserialize the message payload to dict
-6) Validation3: validate `data` against `schemaData`
-7) Validation4: validate `metadata` against `schemaMetadata`
+1) Deserialize Msg to dict (from MsgPack)
+2) Find a Message class for the given version using Message Factory and instantiate the message from dict
+3) Validate the message against schema (raise exception)
+4) Check if signature is required (raise exception if missing)
+5) If message is a Signed Message:
+    - verify signature (raise exception)
+    - deserialize the message payload to dict
+    - find a Message class for the given version using Message Factory and instantiate the message from dict
+    - Validate the message against schema (raise exception)
 end note
 
 note as N2
 <b>Sending a Message</b>
-1) Instantiate a Message
-2) Pass
-1) Receive MSG via ZMQ in MsgPack format
-2) Deserialize Msg to dict
-3) Validation1: validate fields against `schema`
-4) Validation2: verify signature if needed
-5) Deserialize the message payload to dict
-6) Validation3: validate `data` against `schemaData`
-7) Validation4: validate `metadata` against `schemaMetadata`
+1) Validate the message against schema (raise exception)
+2) Convert Msg to dict
+3) Serialize the message dict to MsgPack
 end note
 
 
