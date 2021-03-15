@@ -176,7 +176,8 @@ jobs:
 
   build_plenum_release:
     name: Indy Plenum Release
-    needs: [workflow-setup, indy_plenum, indy_plenum_tests, lint]
+    # needs: [workflow-setup, indy_plenum, indy_plenum_tests, lint]
+    needs: [workflow-setup]
     runs-on: ubuntu-20.04
     container:
       image: ghcr.io/${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}/plenum-build
