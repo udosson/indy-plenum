@@ -186,17 +186,11 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v1
 
-      - name: Install os dependencies
-        run: ./build-scripts/ubuntu-1604/install-os-dependencies.sh
-
-      - name: Install os tools
-        run: ./build-scripts/ubuntu-1604/install-os-tools.sh
-
       - name: Build Indy Plenum deployment package
         run: ./build-scripts/ubuntu-1604/build-indy-plenum.sh /__w/indy-plenum/indy-plenum 1.14.0 /tmp
 
       - name: Build 3rd party deployment packages
-        run: ./build-scripts/ubuntu-1604/build-3rd-parties.sh
+        run: ./build-scripts/ubuntu-1604/build-3rd-parties.sh /tmp
 
   publish_plenum_rc:
     name: Publish release candidate
