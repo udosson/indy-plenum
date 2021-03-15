@@ -209,7 +209,7 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Try load from cache.
-        id: 3rd-party-dependencies
+        id: third-party-dependencies
         uses: actions/cache@v2
         env:
           cache-name: 3rd-party-dependencies
