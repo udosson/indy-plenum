@@ -234,6 +234,9 @@ jobs:
     strategy:
       fail-fast: false
     steps:
+      - name: Check out code
+        uses: actions/checkout@v1
+        
       - name: Try load from cache.
         id: third-party-dependencies
         uses: actions/cache@v2
