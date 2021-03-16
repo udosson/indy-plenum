@@ -222,7 +222,7 @@ jobs:
       - name: Build 3rd party deployment packages
         run: |
           mkdir -p ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies
-          ./build-scripts/ubuntu-1604/build-3rd-parties.sh ${GITHUB_WORKSPACE}/cache/3rd-parties-dependencies
+          ./build-scripts/ubuntu-1604/build-3rd-parties.sh /tmp/third-parties
 
   publish_plenum_rc:
     name: Publish release candidate
