@@ -210,19 +210,18 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v1
 
-      # - name: Try load from cache.
-      #   id: third-party-dependencies
-      #   uses: actions/cache@v2
-      #   env:
-      #     cache-name: 3rd-party-dependencies
-      #   with:
-      #     path: ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies
-      #     key: ${{ hashFiles('./build-scripts/ubuntu-1604/build-3rd-parties.sh') }}
+      - name: Try load from cache.
+        id: third-party-dependencies
+        uses: actions/cache@v2
+        env:
+          cache-name: 3rd-party-dependencies
+        with:
+          path: ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies/
+          key: ${{ hashFiles('./build-scripts/ubuntu-1604/build-3rd-parties.sh') }}
 
       - name: Build 3rd party deployment packages
-        run: |
-          ./build-scripts/ubuntu-1604/build-3rd-parties.sh ./third-party-dependencies/
-          echo $(pwd)
+        run: ./build-scripts/ubuntu-1604/build-3rd-parties.sh ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies/
+          
 
   publish_plenum_rc:
     name: Publish release candidate
