@@ -222,7 +222,7 @@ jobs:
         run: |
           mkdir -p ./build-scripts/ubuntu-1604/cache/3rd-party-dependencies/  
           ./build-scripts/ubuntu-1604/build-3rd-parties.sh ./cache/3rd-party-dependencies/
-          mv /cache/* /tmp/cache
+          mv ./cache/* /tmp/cache
           
   test_cache:
     name: test cache
