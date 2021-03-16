@@ -221,7 +221,7 @@ jobs:
 
       - name: Build 3rd party deployment packages
         run: |
-          mkdir -p ./cache/3rd-party-dependencies/  
+          mkdir -p ./build-scripts/ubuntu-1604/cache/3rd-party-dependencies/  
           ./build-scripts/ubuntu-1604/build-3rd-parties.sh ./cache/3rd-party-dependencies/
           
 
