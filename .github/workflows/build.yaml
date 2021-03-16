@@ -214,7 +214,7 @@ jobs:
         id: third-party-dependencies
         uses: actions/cache@v2
         with:
-          path: ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies/ 
+          path: /tmp/cache
           key: ${{ hashFiles('./build-scripts/ubuntu-1604/build-3rd-parties.sh') }}
 
       - name: Build 3rd party deployment packages
@@ -222,7 +222,7 @@ jobs:
         run: |
           mkdir -p ./build-scripts/ubuntu-1604/cache/3rd-party-dependencies/  
           ./build-scripts/ubuntu-1604/build-3rd-parties.sh ./cache/3rd-party-dependencies/
-          mv /cache/* ${GITHUB_WORKSPACE}
+          mv /cache/* /tmp/cache
           
   test_cache:
     name: test cache
@@ -241,15 +241,15 @@ jobs:
         id: third-party-dependencies
         uses: actions/cache@v2
         with:
-          path: ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies/ 
+          path: /tmp/cache
           key: ${{ hashFiles('./build-scripts/ubuntu-1604/build-3rd-parties.sh') }}
 
       - name: Show chached files
         run: |
           pwd
-          ls -R ${GITHUB_WORKSPACE}
-          ls -R ${GITHUB_WORKSPACE}/cache
-          ls -R ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies/
+          ls -R /tmp
+          ls -R /tmp/cache
+         
 
       
   test_download:
