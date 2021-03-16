@@ -221,7 +221,7 @@ jobs:
 
       - name: Build 3rd party deployment packages
         run: |
-          ./build-scripts/ubuntu-1604/build-3rd-parties.sh ./third-party-dependecies
+          ./build-scripts/ubuntu-1604/build-3rd-parties.sh ./third-party-dependencies/
           echo $(pwd)
 
   publish_plenum_rc:
