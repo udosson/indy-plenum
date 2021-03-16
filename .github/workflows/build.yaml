@@ -236,7 +236,7 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v1
-        
+
       - name: Try load from cache.
         id: third-party-dependencies
         uses: actions/cache@v2
@@ -247,17 +247,11 @@ jobs:
           key: ${{ hashFiles('./build-scripts/ubuntu-1604/build-3rd-parties.sh') }}
 
       - name: Show chached files
-        run: |
-          ls ${GITHUB_WORKSPACE}/build-scripts/ubuntu-1604/cache/3rd-party-dependencies/ 
-          ls  ${GITHUB_WORKSPACE}/build-scripts/ubuntu-1604/cache/
+        run: ls -R ${GITHUB_WORKSPACE}/build-scripts/ubuntu-1604/cache/
 
-      - name: Show chached files
-        run: |
-          ls ${GITHUB_WORKSPACE}/build-scripts/ubuntu-1604/cache/3rd-party-dependencies/ 
-          ls -R ${GITHUB_WORKSPACE}/build-scripts/ubuntu-1604/cache/
       
   test_download:
-    name: test cache
+    name: test artifacts
     # needs: [workflow-setup, indy_plenum, indy_plenum_tests, lint]
     needs: [workflow-setup, build_plenum_3rd_party_dependencies, build_plenum_release]
     runs-on: ubuntu-20.04
