@@ -213,16 +213,16 @@ jobs:
       - name: Try load from cache.
         id: third-party-dependencies
         uses: actions/cache@v2
-        env:
-          cache-name: 3rd-party-dependencies
         with:
-          path: ${GITHUB_WORKSPACE}/build-scripts/ubuntu-1604/cache/3rd-party-dependencies/ 
+          path: ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies/ 
           key: ${{ hashFiles('./build-scripts/ubuntu-1604/build-3rd-parties.sh') }}
 
       - name: Build 3rd party deployment packages
+        if: steps.third-party-dependencies.outputs.cache-hit != 'true'
         run: |
           mkdir -p ./build-scripts/ubuntu-1604/cache/3rd-party-dependencies/  
           ./build-scripts/ubuntu-1604/build-3rd-parties.sh ./cache/3rd-party-dependencies/
+          mv /cache/* ${GITHUB_WORKSPACE}
           
   test_cache:
     name: test cache
@@ -240,14 +240,16 @@ jobs:
       - name: Try load from cache.
         id: third-party-dependencies
         uses: actions/cache@v2
-        env:
-          cache-name: 3rd-party-dependencies
         with:
-          path: ${GITHUB_WORKSPACE}/build-scripts/ubuntu-1604/cache/3rd-party-dependencies/ 
+          path: ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies/ 
           key: ${{ hashFiles('./build-scripts/ubuntu-1604/build-3rd-parties.sh') }}
 
       - name: Show chached files
-        run: ls -R ${GITHUB_WORKSPACE}/build-scripts/ubuntu-1604/cache/
+        run: |
+          pwd
+          ls -R ${GITHUB_WORKSPACE}
+          ls -R ${GITHUB_WORKSPACE}/cache
+          ls -R ${GITHUB_WORKSPACE}/cache/3rd-party-dependencies/
 
       
   test_download:
