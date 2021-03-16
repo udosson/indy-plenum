@@ -227,7 +227,7 @@ jobs:
   test_cache:
     name: test cache
     # needs: [workflow-setup, indy_plenum, indy_plenum_tests, lint]
-    needs: [build_plenum_3rd_party_dependencies, build_plenum_release]
+    needs: [workflow-setup, build_plenum_3rd_party_dependencies, build_plenum_release]
     runs-on: ubuntu-20.04
     container:
       image: ghcr.io/${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}/plenum-build
@@ -256,7 +256,7 @@ jobs:
   test_download:
     name: test cache
     # needs: [workflow-setup, indy_plenum, indy_plenum_tests, lint]
-    needs: [build_plenum_3rd_party_dependencies, build_plenum_release]
+    needs: [workflow-setup, build_plenum_3rd_party_dependencies, build_plenum_release]
     runs-on: ubuntu-20.04
     container:
       image: ghcr.io/${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}/plenum-build
