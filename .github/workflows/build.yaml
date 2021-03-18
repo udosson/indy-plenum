@@ -226,22 +226,22 @@ jobs:
           mv ./cache/* /tmp/cache
       
 
-  publish_plenum_rc:
-    name: Publish release candidate
-    runs-on: ubuntu-20.04
-    needs: ['build_plenum_release', 'build_plenum_3rd_party_dependencies']
-    if: github.event_name == 'push' && (github.repository == 'hyperledger/indy-plenum' && github.ref == 'refs/heads/release*')
-    steps:
-      - name: pub
-        run: |
-          echo "publish rc"
+  # publish_plenum_rc:
+  #   name: Publish release candidate
+  #   runs-on: ubuntu-20.04
+  #   needs: ['build_plenum_release', 'build_plenum_3rd_party_dependencies']
+  #   if: github.event_name == 'push' && (github.repository == 'hyperledger/indy-plenum' && github.ref == 'refs/heads/release*')
+  #   steps:
+  #     - name: pub
+  #       run: |
+  #         echo "publish rc"
 
-  publish_plenum_release:
-    name: Publish release
-    runs-on: ubuntu-20.04
-    needs: ['build_plenum_release', 'build_plenum_3rd_party_dependencies']
-    if: github.event_name == 'push' && (github.repository == 'hyperledger/indy-plenum' && github.ref == 'refs/heads/master')
-    steps:
-      - name: pub
-        run: |
-          echo "publish release"
+  # publish_plenum_release:
+  #   name: Publish release
+  #   runs-on: ubuntu-20.04
+  #   needs: ['build_plenum_release', 'build_plenum_3rd_party_dependencies']
+  #   if: github.event_name == 'push' && (github.repository == 'hyperledger/indy-plenum' && github.ref == 'refs/heads/master')
+  #   steps:
+  #     - name: pub
+  #       run: |
+  #         echo "publish release"
