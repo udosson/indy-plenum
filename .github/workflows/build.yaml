@@ -362,7 +362,8 @@ jobs:
   build-python-packages:
     name: Build and Publish Python Packages to PyPI
     runs-on: ubuntu-20.04
-    needs: [workflow-setup, indy_plenum_tests, indy_plenum_module_tests, lint]
+    # needs: [workflow-setup, indy_plenum_tests, indy_plenum_module_tests, lint]
+    needs: [workflow-setup]
     steps:
       - name: Check out code
         uses: actions/checkout@v1
@@ -395,7 +396,7 @@ jobs:
     name: Publish Artifacts
     runs-on: ubuntu-20.04
     # needs: [workflow-setup, build_release, build_3rd_party_dependencies, build-python-packages]
-    needs: [workflow-setup]
+    needs: [workflow-setup, build-python-packages]
     # if: needs.workflow-setup.outputs.publish == 'true'
     env:
       GITHUB_REF: ${{ needs.workflow-setup.outputs.GITHUB_REF }}
