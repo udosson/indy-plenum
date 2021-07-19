@@ -413,6 +413,7 @@ jobs:
     name: Build and Publish Python Packages to PyPI
     runs-on: ubuntu-20.04
     needs: [workflow-setup, indy_plenum_tests, indy_plenum_module_tests, lint]
+    if: needs.workflow-setup.outputs.publish == 'true'
     steps:
       - name: Check out code
         uses: actions/checkout@v1
@@ -436,7 +437,7 @@ jobs:
 
       - name: Prepare package and set version
         run: |
-           ./.github/actions/publish-pypi/prepare-package.sh . plenum "${{ steps.version.outputs.upstreamVer }}"
+          ./build-scripts/ubuntu-1604/prepare-package.sh . plenum "${{ steps.version.outputs.upstreamVer }}" python-packages
 
       - name: Building python package
         run: |
