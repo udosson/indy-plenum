@@ -376,7 +376,15 @@ jobs:
       - name: Install required packages via pip
         run: | 
           python3 -m pip install pytest-runner wheel pip==9.0.3 
-
+          
+      - name: Set Build Version
+        id: version
+        uses: ./.github/actions/set-version
+        with:
+          moduleName: plenum
+          isDev: ${{ needs.workflow-setup.outputs.isDev }}
+          isRC: ${{ needs.workflow-setup.outputs.isRC }}
+          
       - name: Prepare package and set version
         run: |
           ./build-scripts/ubuntu-1604/prepare-package.sh . plenum "${{ steps.version.outputs.upstreamVer }}" python-packages
